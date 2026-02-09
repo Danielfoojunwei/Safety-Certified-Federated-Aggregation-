@@ -4,14 +4,20 @@ Implements safety-degrading federated attacks:
 - Targeted updates that reduce refusal / increase jailbreak success
   while keeping update norms similar to benign.
 - Stealthy adversaries that evade vector-based anomaly detection.
+- Data poisoning attacks (FedSecurity-style).
+- Model poisoning via gradient manipulation.
+- Label-flipping attacks.
+
+Aligned with FedSecurity (SIGKDD 2024) attack taxonomy.
 """
 
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -141,6 +147,287 @@ class SafetyDegradationAttacker(FLClient):
         )
 
 
+class LabelFlipAttacker(FLClient):
+    """Label-flipping data poisoning attack (FedSecurity).
+
+    Flips labels in the local dataset before training, causing the
+    model to learn incorrect associations. For safety-relevant tasks,
+    this can cause the model to associate harmful content with
+    "safe" labels and vice versa.
+    """
+
+    def __init__(
+        self,
+        client_id: int,
+        dataset: Any,
+        flip_fraction: float = 1.0,
+        local_epochs: int = 1,
+        lr: float = 0.01,
+        seed: int = 42,
+    ) -> None:
+        super().__init__(client_id)
+        self.dataset = dataset
+        self.flip_fraction = flip_fraction
+        self.local_epochs = local_epochs
+        self.lr = lr
+        self.rng = np.random.RandomState(seed)
+
+    def compute_update(
+        self,
+        global_model: nn.Module,
+        round_num: int,
+    ) -> ClientUpdate:
+        """Train on poisoned (label-flipped) data and return update."""
+        local_model = copy.deepcopy(global_model)
+        local_model.train()
+
+        init_params = {
+            name: param.clone()
+            for name, param in local_model.named_parameters()
+        }
+
+        optimizer = torch.optim.SGD(local_model.parameters(), lr=self.lr)
+        n_samples = 0
+
+        from torch.utils.data import DataLoader
+        if isinstance(self.dataset, DataLoader):
+            loader = self.dataset
+        else:
+            loader = DataLoader(self.dataset, batch_size=32, shuffle=True)
+
+        for _ in range(self.local_epochs):
+            for batch in loader:
+                if isinstance(batch, (tuple, list)):
+                    inputs, targets = batch[0], batch[1]
+                else:
+                    inputs, targets = batch, batch
+
+                # Flip labels with probability flip_fraction
+                if self.rng.random() < self.flip_fraction:
+                    n_classes = targets.max().item() + 1
+                    if n_classes > 1:
+                        targets = (n_classes - 1) - targets
+
+                optimizer.zero_grad()
+                outputs = local_model(inputs)
+                loss = nn.functional.cross_entropy(outputs, targets)
+                loss.backward()
+                optimizer.step()
+                n_samples += inputs.size(0)
+
+        delta = {}
+        for name, param in local_model.named_parameters():
+            delta[name] = param.data - init_params[name]
+
+        return ClientUpdate(
+            client_id=self.client_id,
+            delta=delta,
+            n_samples=n_samples,
+            metadata={"attack_type": "label_flip",
+                       "flip_fraction": self.flip_fraction},
+        )
+
+
+class GradientScalingAttacker(FLClient):
+    """Gradient scaling model poisoning attack (FedSecurity).
+
+    Amplifies the local update by a large factor to disproportionately
+    influence the aggregated model. More sophisticated than naive
+    scaling: first computes a legitimate update, then scales it.
+    """
+
+    def __init__(
+        self,
+        client_id: int,
+        dataset: Any,
+        scale_factor: float = 10.0,
+        local_epochs: int = 1,
+        lr: float = 0.01,
+    ) -> None:
+        super().__init__(client_id)
+        self.dataset = dataset
+        self.scale_factor = scale_factor
+        self.local_epochs = local_epochs
+        self.lr = lr
+
+    def compute_update(
+        self,
+        global_model: nn.Module,
+        round_num: int,
+    ) -> ClientUpdate:
+        """Compute legitimate update then scale it."""
+        local_model = copy.deepcopy(global_model)
+        local_model.train()
+
+        init_params = {
+            name: param.clone()
+            for name, param in local_model.named_parameters()
+        }
+
+        optimizer = torch.optim.SGD(local_model.parameters(), lr=self.lr)
+        n_samples = 0
+
+        from torch.utils.data import DataLoader
+        if isinstance(self.dataset, DataLoader):
+            loader = self.dataset
+        else:
+            loader = DataLoader(self.dataset, batch_size=32, shuffle=True)
+
+        for _ in range(self.local_epochs):
+            for batch in loader:
+                if isinstance(batch, (tuple, list)):
+                    inputs, targets = batch[0], batch[1]
+                else:
+                    inputs, targets = batch, batch
+
+                optimizer.zero_grad()
+                outputs = local_model(inputs)
+                loss = nn.functional.cross_entropy(outputs, targets)
+                loss.backward()
+                optimizer.step()
+                n_samples += inputs.size(0)
+
+        # Scale the update
+        delta = {}
+        for name, param in local_model.named_parameters():
+            delta[name] = (param.data - init_params[name]) * self.scale_factor
+
+        return ClientUpdate(
+            client_id=self.client_id,
+            delta=delta,
+            n_samples=n_samples,
+            metadata={"attack_type": "gradient_scaling",
+                       "scale_factor": self.scale_factor},
+        )
+
+
+class InnerProductManipulationAttacker(FLClient):
+    """Inner product manipulation (IPM) attack.
+
+    Crafts updates that have negative inner product with the true gradient
+    direction, causing the model to move away from the optimal solution.
+    More subtle than sign-flipping as it uses the actual gradient direction.
+    """
+
+    def __init__(
+        self,
+        client_id: int,
+        epsilon: float = 0.1,
+    ) -> None:
+        """
+        Args:
+            client_id: Client identifier.
+            epsilon: Small perturbation to add along the negative
+                gradient direction.
+        """
+        super().__init__(client_id)
+        self.epsilon = epsilon
+
+    def compute_update(
+        self,
+        global_model: nn.Module,
+        round_num: int,
+    ) -> ClientUpdate:
+        delta = {}
+        for name, param in global_model.named_parameters():
+            # Negative direction: move away from "good" parameters
+            delta[name] = -self.epsilon * torch.sign(param.data)
+
+        return ClientUpdate(
+            client_id=self.client_id,
+            delta=delta,
+            metadata={"attack_type": "ipm", "epsilon": self.epsilon},
+        )
+
+
+# ---------------------------------------------------------------------------
+# Attack Scenario Registry
+# ---------------------------------------------------------------------------
+
+ATTACK_REGISTRY: dict[str, type[FLClient]] = {
+    "sign_flip": ByzantineClient,
+    "noise": ByzantineClient,
+    "targeted": ByzantineClient,
+    "scaling": ByzantineClient,
+    "stealthy": StealthyAttacker,
+    "safety_degradation": SafetyDegradationAttacker,
+    "ipm": InnerProductManipulationAttacker,
+}
+
+
+@dataclass
+class AttackScenario:
+    """A complete attack scenario for evaluation.
+
+    Attributes:
+        name: Scenario name for reporting.
+        configs: List of attack configurations (can mix attack types).
+        description: Human-readable description.
+    """
+    name: str
+    configs: list[AttackConfig]
+    description: str = ""
+
+
+def create_standard_attack_scenarios(
+    n_total_clients: int = 10,
+) -> list[AttackScenario]:
+    """Create standard attack scenarios from the benchmarking plan.
+
+    Covers:
+    1. No attack (baseline)
+    2. Sign-flip attack
+    3. Stealthy norm-bounded attack
+    4. Safety-degradation targeted attack
+    5. Inner product manipulation
+    6. Mixed attack (multiple types simultaneously)
+
+    Args:
+        n_total_clients: Total number of clients.
+
+    Returns:
+        List of AttackScenario configurations.
+    """
+    n_byz = max(1, n_total_clients // 5)  # 20% Byzantine
+
+    return [
+        AttackScenario(
+            name="no_attack",
+            configs=[AttackConfig(n_byzantine=0)],
+            description="No Byzantine clients (clean baseline)",
+        ),
+        AttackScenario(
+            name="sign_flip",
+            configs=[AttackConfig(n_byzantine=n_byz, attack_type="sign_flip")],
+            description="Sign-flip gradient attack",
+        ),
+        AttackScenario(
+            name="stealthy",
+            configs=[AttackConfig(
+                n_byzantine=n_byz, attack_type="stealthy",
+                norm_bound=1.0,
+            )],
+            description="Norm-bounded stealthy attack",
+        ),
+        AttackScenario(
+            name="safety_degradation",
+            configs=[AttackConfig(
+                n_byzantine=n_byz, attack_type="safety_degradation",
+                scale=0.1,
+            )],
+            description="Targeted safety-degradation attack",
+        ),
+        AttackScenario(
+            name="ipm",
+            configs=[AttackConfig(
+                n_byzantine=n_byz, attack_type="ipm",
+                scale=0.1,
+            )],
+            description="Inner product manipulation attack",
+        ),
+    ]
+
+
 def create_attack_scenario(
     n_total_clients: int,
     config: AttackConfig,
@@ -172,6 +459,11 @@ def create_attack_scenario(
             client = SafetyDegradationAttacker(
                 client_id=client_id,
                 perturbation_scale=config.scale,
+            )
+        elif config.attack_type == "ipm":
+            client = InnerProductManipulationAttacker(
+                client_id=client_id,
+                epsilon=config.scale,
             )
         else:
             client = ByzantineClient(

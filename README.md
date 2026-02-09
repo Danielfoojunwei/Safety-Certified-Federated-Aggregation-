@@ -25,8 +25,8 @@ sca/
   verifier/       RLM verifier: safety predicates, mutation operators, adaptive testing
   certificate/    Certificate schema, acceptance rule, gate
   federated/      FL clients (benign + Byzantine), aggregation (FedAvg, FedAdam, Median, TrimmedMean, Krum), server
-  experiments/    Attack scenarios, baseline configs, evaluation metrics, experiment runner
-tests/            Unit tests (64 tests covering all core components)
+  experiments/    Attack scenarios, benchmarks, evaluation protocol, metrics, experiment runner
+tests/            Unit tests (105 tests covering all components)
 ```
 
 ## Key Modules
@@ -45,7 +45,12 @@ tests/            Unit tests (64 tests covering all core components)
 | `sca.federated.aggregation` | FedAvg, FedAdam, coordinate-wise median, trimmed mean, Krum |
 | `sca.federated.client` | Benign client (local SGD) and Byzantine clients (sign-flip, noise, targeted, scaling) |
 | `sca.federated.server` | FL server with commit-gated SCA protocol |
-| `sca.experiments.*` | Attack strategies, baseline configurations, evaluation metrics, experiment runner |
+| `sca.experiments.attacks` | Byzantine attacks: sign-flip, stealthy, safety-degradation, IPM, label-flip, gradient-scaling |
+| `sca.experiments.benchmarks` | Safety benchmark suites: SafetyBench, JailbreakBench, TruthfulQA, ToxiGen, CASE-Bench, HHH |
+| `sca.experiments.evaluation` | Evaluation protocol, HEM scoring, ablation framework, interpretability analysis |
+| `sca.experiments.metrics` | Violation rate, bound tightness, sample efficiency, regression size metrics |
+| `sca.experiments.baselines` | 8 baseline configurations from no-gating to full SCA |
+| `sca.experiments.run_experiment` | Experiment runner with multi-scenario benchmarking pipeline |
 
 ## Installation
 
@@ -76,6 +81,31 @@ At each FL round:
 3. Static safety suite gating (fixed prompts, no recursion)
 4. SCA without MKG (adaptive recursion, no graph coverage)
 5. Full SCA (RLM + MKG + certificates)
+
+## Benchmarking & Evaluation
+
+### Safety Benchmarks
+- **SafetyBench** (ACL 2024): Safety understanding via 7-category MCQ
+- **JailbreakBench** (NeurIPS 2024): Jailbreak robustness + over-refusal
+- **CASE-Bench** (ICLR 2025): Context-aware safety evaluation
+- **TruthfulQA**: Truthfulness (817 questions, 38 categories)
+- **ToxiGen**: Toxicity detection (implicit hate speech)
+- **HHH-Alignment**: Helpfulness, honesty, harmlessness (Anthropic RLHF)
+
+### Holistic Evaluation Metrics (HEM)
+Weighted aggregation of accuracy, safety, convergence, efficiency, fairness, and privacy scores into a single comparable metric.
+
+### Attack Scenarios
+- No attack (clean baseline)
+- Sign-flip / noise / scaling attacks
+- Stealthy norm-bounded attacks
+- Targeted safety-degradation attacks
+- Inner product manipulation (IPM)
+- Label-flip data poisoning
+- Gradient scaling model poisoning
+
+### Ablation Studies
+Automated sweeps over recursion depth D, branching factor B, partition granularity K, confidence delta, target epsilon, and verification budget M.
 
 ## License
 

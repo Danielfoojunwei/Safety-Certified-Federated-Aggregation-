@@ -6,8 +6,6 @@ import pytest
 from sca.knowledge_graph.embedding import RandomProjectionEmbedder
 from sca.knowledge_graph.mkg import ModelKnowledgeGraph
 from sca.knowledge_graph.regions import InteractionRegion, RegionPartition
-
-import numpy as np
 from sca.verifier.mutations import (
     CompositeMutator,
     EscalationMutator,

@@ -1,8 +1,16 @@
-"""Main experiment runner (Section 7).
+"""Main experiment runner (Sections 5 and 7).
 
 Orchestrates federated learning experiments with different attack
 scenarios, aggregation methods, and safety gating configurations.
-Collects metrics aligned with the theory (Section 7.3).
+Collects metrics aligned with the theory (Section 7.3) and the
+empirical benchmarking plan (Section 5.4).
+
+Supports:
+- Multi-baseline comparison under shared attack scenarios.
+- Integration with safety benchmark suites (SafetyBench, JailbreakBench, etc.).
+- Holistic Evaluation Metrics (HEM) aggregation.
+- Ablation studies over key parameters.
+- Comprehensive per-round and final evaluation.
 """
 
 from __future__ import annotations
@@ -10,6 +18,7 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -19,8 +28,23 @@ import torch
 import torch.nn as nn
 
 from sca.certificate.acceptance import AcceptanceGate
-from sca.experiments.attacks import AttackConfig, create_attack_scenario
+from sca.experiments.attacks import (
+    AttackConfig,
+    AttackScenario,
+    create_attack_scenario,
+    create_standard_attack_scenarios,
+)
 from sca.experiments.baselines import BaselineConfig, build_verifier_for_config, create_baseline_configs
+from sca.experiments.benchmarks import Benchmark, BenchmarkResult, get_all_benchmarks, run_benchmark_suite
+from sca.experiments.evaluation import (
+    ComprehensiveMetrics,
+    EvaluationProtocol,
+    EvaluationReport,
+    HEMWeights,
+    compute_comprehensive_metrics,
+    compute_hem_score,
+    generate_ablation_configs,
+)
 from sca.experiments.metrics import (
     SafetyMetrics,
     aggregate_round_metrics,
@@ -225,3 +249,215 @@ class ExperimentRunner:
             final_safety=final_safety,
             summary=summary,
         )
+
+
+# ---------------------------------------------------------------------------
+# Full Benchmarking Experiment Runner (Section 5 of benchmarking plan)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class BenchmarkingConfig:
+    """Configuration for the full benchmarking evaluation pipeline.
+
+    Extends ExperimentConfig with benchmark suite settings, HEM weights,
+    ablation parameters, and attack scenario sweeps.
+
+    Attributes:
+        base_config: Base experiment configuration.
+        attack_scenarios: List of attack scenarios to evaluate.
+        benchmarks: Safety benchmark suites to run.
+        hem_weights: HEM importance weights.
+        run_ablations: Whether to run ablation studies.
+        run_benchmarks: Whether to run benchmark suite evaluation.
+        output_dir: Directory for saving results.
+    """
+    base_config: ExperimentConfig = field(default_factory=ExperimentConfig)
+    attack_scenarios: list[AttackScenario] | None = None
+    benchmarks: list[Benchmark] | None = None
+    hem_weights: HEMWeights | None = None
+    run_ablations: bool = False
+    run_benchmarks: bool = True
+    output_dir: str | Path = "results"
+
+
+@dataclass
+class BenchmarkingResult:
+    """Results from the full benchmarking pipeline.
+
+    Attributes:
+        scenario_results: Per-scenario, per-baseline experiment results.
+        benchmark_results: Per-baseline benchmark suite results.
+        ablation_results: Ablation study results.
+        report: Evaluation report with comparisons.
+    """
+    scenario_results: dict[str, list[ExperimentResult]] = field(default_factory=dict)
+    benchmark_results: dict[str, dict[str, BenchmarkResult]] = field(default_factory=dict)
+    ablation_results: dict[str, list[dict]] = field(default_factory=dict)
+    report: EvaluationReport | None = None
+
+
+class BenchmarkingRunner:
+    """Full benchmarking pipeline runner (Section 5 of evaluation plan).
+
+    Orchestrates:
+    1. Multi-scenario attack experiments.
+    2. Benchmark suite evaluation (SafetyBench, JailbreakBench, etc.).
+    3. HEM score computation.
+    4. Ablation studies.
+    5. Report generation.
+    """
+
+    def __init__(
+        self,
+        model_factory: Callable[[], nn.Module],
+        client_data_factory: Callable[[int], Any],
+        safety_predicate: SafetyPredicate,
+        model_fn_factory: Callable[[nn.Module], Callable[[dict], str]],
+        seed_interactions: list[dict],
+        test_interactions: list[dict],
+    ) -> None:
+        self.model_factory = model_factory
+        self.client_data_factory = client_data_factory
+        self.safety_predicate = safety_predicate
+        self.model_fn_factory = model_fn_factory
+        self.seed_interactions = seed_interactions
+        self.test_interactions = test_interactions
+
+        self.experiment_runner = ExperimentRunner(
+            model_factory=model_factory,
+            client_data_factory=client_data_factory,
+            safety_predicate=safety_predicate,
+            model_fn_factory=model_fn_factory,
+            seed_interactions=seed_interactions,
+            test_interactions=test_interactions,
+        )
+
+    def run(self, config: BenchmarkingConfig) -> BenchmarkingResult:
+        """Run the full benchmarking pipeline.
+
+        Args:
+            config: Benchmarking configuration.
+
+        Returns:
+            BenchmarkingResult with all results.
+        """
+        result = BenchmarkingResult()
+
+        # 1. Attack scenario experiments
+        scenarios = config.attack_scenarios or create_standard_attack_scenarios(
+            n_total_clients=config.base_config.n_clients,
+        )
+
+        for scenario in scenarios:
+            logger.info(f"Running attack scenario: {scenario.name}")
+            for attack_config in scenario.configs:
+                exp_config = copy.copy(config.base_config)
+                exp_config.attack_config = attack_config
+                exp_results = self.experiment_runner.run(exp_config)
+                result.scenario_results[scenario.name] = exp_results
+
+        # 2. Benchmark suite evaluation
+        if config.run_benchmarks:
+            benchmarks = config.benchmarks or get_all_benchmarks(n_synthetic=50)
+
+            # Run benchmarks on the final model from each baseline in the
+            # first scenario
+            first_scenario = list(result.scenario_results.values())
+            if first_scenario:
+                for exp_result in first_scenario[0]:
+                    model = self.model_factory()
+                    model_fn = self.model_fn_factory(model)
+                    bench_results = run_benchmark_suite(model_fn, benchmarks)
+                    result.benchmark_results[exp_result.config_name] = bench_results
+
+        # 3. Ablation studies
+        if config.run_ablations:
+            ablation_configs = generate_ablation_configs()
+            for sweep in ablation_configs:
+                sweep_name = sweep[0].parameter if sweep else "unknown"
+                sweep_results = []
+
+                for abl in sweep:
+                    logger.info(f"Ablation: {abl.name}")
+                    exp_config = copy.copy(config.base_config)
+
+                    # Apply ablation parameter
+                    if abl.parameter == "epsilon":
+                        exp_config.epsilon = abl.value
+                    elif abl.parameter == "delta":
+                        exp_config.delta = abl.value
+                    elif abl.parameter == "total_budget":
+                        exp_config.verification_budget = abl.value
+
+                    # Only run the full SCA baseline for ablations
+                    from sca.federated.aggregation import FedAvg
+                    exp_config.baseline_configs = [
+                        BaselineConfig(
+                            name=f"SCA_{abl.name}",
+                            aggregator=FedAvg(),
+                            use_safety_gate=True,
+                            use_recursion=True,
+                            use_mkg=True,
+                            verification_budget=exp_config.verification_budget,
+                        ),
+                    ]
+
+                    exp_results = self.experiment_runner.run(exp_config)
+                    if exp_results:
+                        sweep_results.append({
+                            "config": abl.name,
+                            "parameter": abl.parameter,
+                            "value": abl.value,
+                            "summary": exp_results[0].summary,
+                        })
+
+                result.ablation_results[sweep_name] = sweep_results
+
+        return result
+
+    def save_results(
+        self,
+        result: BenchmarkingResult,
+        output_dir: str | Path,
+    ) -> None:
+        """Save benchmarking results to disk.
+
+        Args:
+            result: Benchmarking results.
+            output_dir: Output directory.
+        """
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+
+        # Save scenario results
+        for scenario_name, exp_results in result.scenario_results.items():
+            scenario_data = []
+            for er in exp_results:
+                scenario_data.append({
+                    "config_name": er.config_name,
+                    "summary": er.summary,
+                    "round_results": er.round_results,
+                })
+            with open(out / f"scenario_{scenario_name}.json", "w") as f:
+                json.dump(scenario_data, f, indent=2, default=str)
+
+        # Save benchmark results
+        for baseline_name, bench_results in result.benchmark_results.items():
+            bench_data = {
+                name: {
+                    "metrics": br.metrics,
+                    "per_category": br.per_category_metrics,
+                    "n_samples": br.n_samples,
+                }
+                for name, br in bench_results.items()
+            }
+            safe_name = baseline_name.replace(" ", "_").replace("/", "_")
+            with open(out / f"benchmarks_{safe_name}.json", "w") as f:
+                json.dump(bench_data, f, indent=2, default=str)
+
+        # Save ablation results
+        if result.ablation_results:
+            with open(out / "ablation_results.json", "w") as f:
+                json.dump(result.ablation_results, f, indent=2, default=str)
+
+        logger.info(f"Results saved to {out}")
