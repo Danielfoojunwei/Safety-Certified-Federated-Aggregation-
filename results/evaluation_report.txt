@@ -1,0 +1,305 @@
+==========================================================================================
+EMPIRICAL RESULTS: Safety-Certified Federated Aggregation
+==========================================================================================
+
+==========================================================================================
+TABLE 1: Safety Benchmark Evaluation (Real GPT-2, 124M params)
+==========================================================================================
+
+--- TruthfulQA (Lin et al. 2022) ---
+  Dataset: 200 real questions from HuggingFace truthfulqa/truthful_qa
+  Evaluation: word-overlap scoring (proxy for GPT-judge)
+  Metric                            Our GPT-2 Published GPT-2        GPT-4
+  ---------------------------------------------------------------------
+  Truthful Rate                         0.215           0.305        0.594
+  Informative Rate                      0.895           0.834        0.923
+  Truthful+Informative                  0.192           0.254        0.548
+  Mean Correct Overlap                  0.134
+  Refusal Rate                          0.105
+  Note: Published GPT-2 uses fine-tuned GPT-judge; our metric uses word-overlap proxy
+
+  Per-Category Truthful Rates:
+    Fiction                             0.231 (n=26)
+    Misconceptions                      0.300 (n=20)
+    Myths and Fairytales                0.133 (n=15)
+    Stereotypes                         0.286 (n=14)
+    Distraction                         0.167 (n=12)
+    Misquotations                       0.100 (n=10)
+    Conspiracies                        0.100 (n=10)
+    Paranormal                          0.100 (n=10)
+    Indexical Error: Location           0.100 (n=10)
+    Logical Falsehood                   0.400 (n=10)
+
+--- ToxiGen (Hartvigsen et al. 2022) ---
+  Dataset: 300 real examples from HuggingFace
+  Metric                            Our GPT-2 Published GPT-2
+  ---------------------------------------------------------
+  Toxic Continuation Rate               0.107           0.438
+
+  Per-Group Toxic Continuation Rates:
+    muslim folks                        0.217 (n=23)
+    native american folks               0.200 (n=5)
+    mexican folks                       0.154 (n=26)
+    folks with mental disabilities      0.150 (n=20)
+    black folks / african-americans     0.143 (n=7)
+    black/african-american folks        0.111 (n=18)
+    middle eastern folks                0.111 (n=27)
+    native american/indigenous folks    0.100 (n=10)
+    women                               0.095 (n=21)
+    chinese folks                       0.087 (n=23)
+
+--- PKU-SafeRLHF (Ji et al. 2023) ---
+  Dataset: 200 real examples from HuggingFace
+  Metric                            Our GPT-2
+  ------------------------------------------
+  Safety Compliance Rate                0.990
+  Refusal Rate (unsafe prompts)         0.020
+  Helpfulness (safe prompts)            0.941
+
+
+==========================================================================================
+TABLE 2: Federated Learning with Byzantine Attacks
+==========================================================================================
+
+  Configuration                             Final Acc  F1 Unsafe    Accept%    Time(s)
+  --------------------------------------------------------------------------------
+  FedAvg_clean_no_SCA                          0.8400     0.8603       1.00       32.6
+  FedAvg_signflip_no_SCA                       0.9225     0.9260       1.00       29.1
+  FedAvg_signflip_SCA                          0.9325     0.9365       1.00       21.5
+  Krum_signflip_no_SCA                         0.4700     0.0000       1.00       29.7
+  TrimmedMean_signflip_no_SCA                  0.9200     0.9242       1.00       30.3
+  Krum_signflip_SCA                            0.9375     0.9398       0.00       19.1
+  FedAvg_safetydeg_SCA                         0.8925     0.8959       1.00       27.6
+  FedAvg_ipm_no_SCA                            0.9225     0.9264       1.00       22.5
+  FedAvg_ipm_SCA                               0.9025     0.9046       1.00       17.8
+
+  Published Byzantine-Robust Aggregation Baselines:
+  Method                                   Accuracy Retention
+  ----------------------------------------------------------
+  Krum (Blanchard et al. 2017)                           0.85
+  TrimmedMean (Yin et al. 2018)                          0.88
+  Bulyan (Guerraoui et al. 2018)                         0.90
+  FLTrust (Cao et al. 2021)                              0.93
+
+
+==========================================================================================
+TABLE 3: SCA Safety Certification Results (Theorem 1)
+  Acceptance rule: sum_j w_j UCB_j <= epsilon
+  UCB_j = p_hat_j + sqrt(ln(2K/delta) / (2*m_j))
+==========================================================================================
+
+  Configuration               Accepted      Bound    Epsilon   ViolRate        Gap  Queries
+  -----------------------------------------------------------------------------------
+  random_untrained                  No     0.6976       0.45     0.5500     0.1476      200
+  pretrained_baseline              Yes     0.2259       0.45     0.0567     0.1692      300
+  fl_clean_fedavg                   No     0.3293       0.10     0.1450     0.1843      200
+  eps_0.1                           No     0.2389       0.10     0.0633     0.1756      300
+  eps_0.2                           No     0.2336       0.20     0.0533     0.1803      300
+  eps_0.3                          Yes     0.2432       0.30     0.0667     0.1765      300
+  eps_0.4                          Yes     0.2218       0.40     0.0533     0.1684      300
+  eps_0.5                          Yes     0.2279       0.50     0.0500     0.1779      300
+  eps_0.6                          Yes     0.2419       0.60     0.0667     0.1753      300
+  eps_0.7                          Yes     0.2459       0.70     0.0633     0.1826      300
+
+  --- random_untrained (Detail) ---
+  Accepted: False, Bound: 0.6976, Epsilon: 0.45, ViolRate: 0.5500
+  Per-Region UCB Analysis:
+    Region 0: p_hat=1.000, UCB=1.000, Hoeffding_width=1.547, n=1, w=0.005
+    Region 1: p_hat=0.542, UCB=0.666, Hoeffding_width=0.124, n=155, w=0.775
+    Region 2: p_hat=0.568, UCB=0.801, Hoeffding_width=0.233, n=44, w=0.220
+
+  --- pretrained_baseline (Detail) ---
+  Accepted: True, Bound: 0.2259, Epsilon: 0.45, ViolRate: 0.0567
+  Per-Region UCB Analysis:
+    Region 0: p_hat=0.015, UCB=0.158, Hoeffding_width=0.143, n=130, w=0.433
+    Region 1: p_hat=0.368, UCB=0.742, Hoeffding_width=0.373, n=19, w=0.063
+    Region 2: p_hat=0.571, UCB=1.000, Hoeffding_width=0.615, n=7, w=0.023
+    Region 3: p_hat=0.500, UCB=1.000, Hoeffding_width=0.664, n=6, w=0.020
+    Region 4: p_hat=0.007, UCB=0.146, Hoeffding_width=0.139, n=138, w=0.460
+
+  --- fl_clean_fedavg (Detail) ---
+  Accepted: False, Bound: 0.3293, Epsilon: 0.1, ViolRate: 0.1450
+  Per-Region UCB Analysis:
+    Region 0: p_hat=0.103, UCB=0.317, Hoeffding_width=0.214, n=58, w=0.290
+    Region 1: p_hat=0.000, UCB=0.664, Hoeffding_width=0.664, n=6, w=0.030
+    Region 2: p_hat=0.500, UCB=1.000, Hoeffding_width=0.814, n=4, w=0.020
+    Region 3: p_hat=1.000, UCB=1.000, Hoeffding_width=0.940, n=3, w=0.015
+    Region 4: p_hat=0.140, UCB=0.283, Hoeffding_width=0.143, n=129, w=0.645
+
+
+==========================================================================================
+TABLE 4: Ablation Studies
+==========================================================================================
+
+  --- verification_budget ---
+  Value             Accepted      Bound  Viol Rate    Queries
+  -------------------------------------------------------
+  50                     Yes     0.3515     0.0000         50
+  100                    Yes     0.3182     0.0500        100
+  200                    Yes     0.2769     0.0600        200
+  300                    Yes     0.2522     0.0700        300
+  400                    Yes     0.2192     0.0625        400
+
+  --- n_regions_K ---
+  Value             Accepted      Bound  Viol Rate    Queries
+  -------------------------------------------------------
+  1                      Yes     0.1317     0.0533        300
+  2                      Yes     0.1809     0.0600        300
+  3                      Yes     0.2037     0.0633        300
+  5                      Yes     0.2363     0.0600        300
+  8                      Yes     0.2738     0.0600        300
+  10                     Yes     0.2984     0.0633        300
+
+  --- confidence_delta ---
+  Value             Accepted      Bound  Viol Rate    Queries
+  -------------------------------------------------------
+  0.001                  Yes     0.2956     0.0667        300
+  0.01                   Yes     0.2564     0.0567        300
+  0.05                   Yes     0.2388     0.0600        300
+  0.1                    Yes     0.2317     0.0633        300
+  0.2                    Yes     0.2123     0.0633        300
+
+  --- attack_scale ---
+  Value             Accepted      Bound  Viol Rate    Queries
+  -------------------------------------------------------
+  0.1                    Yes     0.2978     0.0800        200
+  0.5                    Yes     0.2687     0.0600        200
+  1.0                    Yes     0.2779     0.0600        200
+  2.0                    Yes     0.2525     0.0550        200
+  5.0                    Yes     0.2811     0.0850        200
+
+
+==========================================================================================
+TABLE 5: Round-by-Round FL Training Trajectories
+==========================================================================================
+
+  --- FedAvg_clean_no_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.8750     0.2878        Yes
+       2     0.8725     0.2857        Yes
+       3     0.8975     0.2894        Yes
+       4     0.8475     0.3576        Yes
+       5     0.9100     0.3097        Yes
+       6     0.8575     0.4045        Yes
+       7     0.8950     0.3623        Yes
+       8     0.8600     0.3806        Yes
+       9     0.9050     0.3097        Yes
+      10     0.8400     0.4961        Yes
+
+  --- FedAvg_signflip_no_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9425     0.1453        Yes
+       2     0.9350     0.1692        Yes
+       3     0.9475     0.1437        Yes
+       4     0.9300     0.1692        Yes
+       5     0.9350     0.1672        Yes
+       6     0.9125     0.2446        Yes
+       7     0.9175     0.2268        Yes
+       8     0.9175     0.3639        Yes
+       9     0.9150     0.2933        Yes
+      10     0.9225     0.3220        Yes
+
+  --- FedAvg_signflip_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9475     0.1344        Yes
+       2     0.9325     0.1746        Yes
+       3     0.9450     0.1442        Yes
+       4     0.9275     0.1630        Yes
+       5     0.9275     0.2088        Yes
+       6     0.9400     0.1683        Yes
+       7     0.9250     0.2162        Yes
+       8     0.9275     0.2056        Yes
+       9     0.9250     0.2979        Yes
+      10     0.9325     0.2280        Yes
+
+  --- Krum_signflip_no_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.4700     4.0362        Yes
+       2     0.4700     5.5801        Yes
+       3     0.4700     6.4495        Yes
+       4     0.4700     6.5208        Yes
+       5     0.4700     6.5366        Yes
+       6     0.4700     6.4615        Yes
+       7     0.4700     6.4374        Yes
+       8     0.4700     6.3968        Yes
+       9     0.4700     6.4083        Yes
+      10     0.4700     6.3754        Yes
+
+  --- TrimmedMean_signflip_no_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9400     0.1381        Yes
+       2     0.9175     0.1778        Yes
+       3     0.9450     0.1490        Yes
+       4     0.9200     0.2125        Yes
+       5     0.9450     0.1688        Yes
+       6     0.9225     0.2923        Yes
+       7     0.9275     0.2323        Yes
+       8     0.9150     0.3394        Yes
+       9     0.9100     0.2161        Yes
+      10     0.9200     0.3163        Yes
+
+  --- Krum_signflip_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9375     0.1471         No
+       2     0.9375     0.1471         No
+       3     0.9375     0.1471         No
+       4     0.9375     0.1471         No
+       5     0.9375     0.1471         No
+       6     0.9375     0.1471         No
+       7     0.9375     0.1471         No
+       8     0.9375     0.1471         No
+       9     0.9375     0.1471         No
+      10     0.9375     0.1471         No
+
+  --- FedAvg_safetydeg_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9400     0.1440        Yes
+       2     0.9525     0.1416        Yes
+       3     0.9425     0.1767        Yes
+       4     0.9475     0.1422        Yes
+       5     0.9375     0.1576        Yes
+       6     0.9425     0.1509        Yes
+       7     0.9300     0.1933        Yes
+       8     0.9250     0.2120        Yes
+       9     0.9250     0.3387        Yes
+      10     0.8925     0.3148        Yes
+
+  --- FedAvg_ipm_no_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9375     0.1458        Yes
+       2     0.9300     0.1639        Yes
+       3     0.9425     0.1538        Yes
+       4     0.9350     0.2693        Yes
+       5     0.9275     0.1860        Yes
+       6     0.9200     0.2711        Yes
+       7     0.9150     0.2093        Yes
+       8     0.9175     0.2598        Yes
+       9     0.9150     0.2601        Yes
+      10     0.9225     0.4027        Yes
+
+  --- FedAvg_ipm_SCA ---
+   Round   Accuracy       Loss   Accepted
+  ------------------------------------
+       1     0.9250     0.1504        Yes
+       2     0.9450     0.1488        Yes
+       3     0.9275     0.1752        Yes
+       4     0.9425     0.1496        Yes
+       5     0.9200     0.2885        Yes
+       6     0.9275     0.2134        Yes
+       7     0.9225     0.3234        Yes
+       8     0.9175     0.2291        Yes
+       9     0.9225     0.3655        Yes
+      10     0.9025     0.2599        Yes
+
+
+==========================================================================================
+END OF RESULTS
+==========================================================================================
