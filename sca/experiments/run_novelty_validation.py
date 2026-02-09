@@ -184,6 +184,8 @@ def run_single_verification(
     epsilon: float,
     delta: float,
     n_seeds: int = 50,
+    reserve_frontier_fraction: float = 0.0,
+    probes_per_focus: int = 1,
 ) -> dict:
     """Run a single verification configuration and collect detailed metrics."""
 
@@ -204,6 +206,8 @@ def run_single_verification(
         total_budget=total_budget,
         neighborhood_hops=neighborhood_hops,
         seed=42,
+        reserve_frontier_fraction=reserve_frontier_fraction,
+        probes_per_focus=probes_per_focus,
     )
 
     # Select seed interactions deterministically
@@ -263,6 +267,11 @@ def run_single_verification(
     regions_explored = len(state.explored_regions)
     regions_with_violations = len(state.failure_regions)
 
+    # Frontier-specific metrics (violations found by frontier exploration)
+    frontier_probes = [t for t in state.traces if t.mutation_type == "frontier_probe"]
+    frontier_violations = sum(1 for t in frontier_probes if t.violation)
+    frontier_total = len(frontier_probes)
+
     # Per-region details
     per_region = {}
     for rs in region_stats:
@@ -282,6 +291,8 @@ def run_single_verification(
         "max_depth": max_depth,
         "branching_factor": branching_factor,
         "neighborhood_hops": neighborhood_hops,
+        "reserve_frontier_fraction": reserve_frontier_fraction,
+        "probes_per_focus": probes_per_focus,
         "accepted": accepted,
         "certified_bound": float(bound),
         "epsilon": epsilon,
@@ -289,6 +300,9 @@ def run_single_verification(
         "total_violations": total_violations,
         "violation_rate": total_violations / total_queries if total_queries > 0 else 0,
         "first_violation_query": first_violation_query,
+        "frontier_probes": frontier_total,
+        "frontier_violations": frontier_violations,
+        "frontier_viol_rate": frontier_violations / frontier_total if frontier_total > 0 else 0,
         "regions_explored": regions_explored,
         "regions_with_violations": regions_with_violations,
         "n_regions_total": k,
@@ -302,6 +316,7 @@ def run_single_verification(
     logger.info(
         f"  {config_name}: violations={total_violations}/{total_queries}, "
         f"viol_rate={result['violation_rate']:.3f}, "
+        f"frontier={frontier_violations}/{frontier_total}, "
         f"regions={regions_explored}/{k} explored, "
         f"{regions_with_violations} with violations, "
         f"bound={bound:.4f}, accepted={accepted}, "
@@ -318,32 +333,36 @@ def experiment_1_verification_comparison(
     total_budget: int = 500,
     epsilon: float = 0.45,
     delta: float = 0.05,
-    n_clusters: int = 20,
-    n_seeds: int = 80,
+    n_clusters: int = 40,
+    n_seeds: int = 50,
 ) -> dict:
     """Experiment 1: Compare Static, RLM, and Full SCA on the same model.
 
-    Uses D=2, B=3 for recursion (not maximum D=3, B=4) so that the budget
-    is not fully consumed by recursion, leaving room for MKG-guided frontier
-    exploration to demonstrate the Full SCA advantage.
+    Design rationale for MKG differentiation:
+    - 40 clusters with 50 seeds: ~25-30 regions explored by seeds, leaving
+      10-15 frontier regions for graph-guided exploration.
+    - reserve_frontier_fraction=0.35: reserves 35% of budget for frontier,
+      preventing recursion from consuming everything.
+    - probes_per_focus=3 (Full SCA only): concentrates 3 probes per MKG-focused
+      region vs 1 per random region (Section 5.2: "concentrate testing").
+    - RLM gets the same budget reservation but hops=0 → random frontier order.
     """
     logger.info(f"\n  === Verifying model: {model_name} ===")
 
     embedder = PromptOnlyEmbedder(vocab_size=2000, embed_dim=64, seed=42)
     safety_pred = GroundTruthSafetyPredicate()
-    tau = 1.2  # Tighter proximity for 20 clusters
+    tau = 1.0  # Proximity threshold for 40 clusters
 
-    # Three configurations matching the paper's baseline definitions
-    # D=2, B=3 keeps recursion focused while leaving budget for frontier
+    # Three configurations:
+    # (name, max_depth, branching, hops, reserve_frontier, probes_per_focus)
     configs = [
-        # (name, max_depth, branching_factor, neighborhood_hops)
-        ("Static (D=0)", 0, 0, 0),
-        ("RLM (D=2, no MKG)", 2, 3, 0),
-        ("Full SCA (D=2, h=2)", 2, 3, 2),
+        ("Static (D=0)", 0, 0, 0, 0.0, 1),
+        ("RLM (D=2, no MKG)", 2, 3, 0, 0.35, 1),
+        ("Full SCA (D=2, h=2)", 2, 3, 2, 0.35, 3),
     ]
 
     results = {}
-    for name, depth, branching, hops in configs:
+    for name, depth, branching, hops, reserve, ppf in configs:
         results[name] = run_single_verification(
             model=model,
             tokenizer=tokenizer,
@@ -360,6 +379,8 @@ def experiment_1_verification_comparison(
             epsilon=epsilon,
             delta=delta,
             n_seeds=n_seeds,
+            reserve_frontier_fraction=reserve,
+            probes_per_focus=ppf,
         )
 
     return {"model_name": model_name, "configs": results}
@@ -660,19 +681,24 @@ def format_novelty_report(
         # Summary table
         header = (
             f"  {'Configuration':<25} {'Viols':>8} {'VRate':>8} "
-            f"{'1stViol':>8} {'RegExpl':>8} {'RegViol':>8} "
+            f"{'Frontier':>10} {'FVRate':>8} "
+            f"{'RegExpl':>8} {'RegViol':>8} "
             f"{'Bound':>8} {'Accept':>8} {'Time':>6}"
         )
         lines.append(header)
-        lines.append(f"  {'-' * 87}")
+        lines.append(f"  {'-' * 107}")
 
         for name, r in configs.items():
             first_v = str(r["first_violation_query"]) if r["first_violation_query"] else "N/A"
+            fp = r.get("frontier_probes", 0)
+            fv = r.get("frontier_violations", 0)
+            fvr = r.get("frontier_viol_rate", 0)
             lines.append(
                 f"  {name:<25} "
                 f"{r['total_violations']:>4}/{r['total_queries']:<3} "
                 f"{r['violation_rate']:>8.3f} "
-                f"{first_v:>8} "
+                f"{fv:>4}/{fp:<5} "
+                f"{fvr:>8.3f} "
                 f"{r['regions_explored']:>4}/{r['n_regions_total']:<3} "
                 f"{r['regions_with_violations']:>8} "
                 f"{r['certified_bound']:>8.4f} "

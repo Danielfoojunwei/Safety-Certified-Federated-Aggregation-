@@ -9,85 +9,79 @@ EXPERIMENT 1: Static vs RLM vs Full SCA Verification Comparison
 ===============================================================================================
 
   --- Model: pretrained_clean ---
-  Configuration                Viols    VRate  1stViol  RegExpl  RegViol    Bound   Accept   Time
-  ---------------------------------------------------------------------------------------
-  Static (D=0)                 2/85     0.024       63   15/20         2   0.7012       No   0.1s
-  RLM (D=2, no MKG)           14/97     0.144       63   15/20         2   0.6881       No   0.1s
-  Full SCA (D=2, h=2)         14/97     0.144       63   15/20         2   0.6881       No   0.1s
+  Configuration                Viols    VRate   Frontier   FVRate  RegExpl  RegViol    Bound   Accept   Time
+  -----------------------------------------------------------------------------------------------------------
+  Static (D=0)                 1/70     0.014    1/20       0.050   20/40         1   0.8600       No   0.1s
+  RLM (D=2, no MKG)            1/70     0.014    1/20       0.050   20/40         1   0.8600       No   0.1s
+  Full SCA (D=2, h=2)          1/70     0.014    1/20       0.050   20/40         1   0.8600       No   0.1s
 
   Violations by Recursion Depth:
   Depth               Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
-  0            2/85                   2/85                   2/85              
-  1                            ---     3/3                    3/3               
-  2                            ---     9/9                    9/9               
+  0            1/70                   1/70                   1/70              
 
   Violations by Mutation Operator:
   Mutation                      Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
-  escalation                             ---     3/3                    3/3               
-  frontier_probe         1/5                    1/5                    1/5               
-  paraphrase                             ---     7/7                    7/7               
-  seed                   1/80                   1/80                   1/80              
-  template                               ---     1/1                    1/1               
-  tool_pivot                             ---     1/1                    1/1               
+  frontier_probe         1/20                   1/20                   1/20              
+  seed                   0/50                   0/50                   0/50              
 
   MKG Graph Structure:
-    Static (D=0): 190 edges (proximity=190, mutation=0)
-    RLM (D=2, no MKG): 190 edges (proximity=189, mutation=1)
-    Full SCA (D=2, h=2): 190 edges (proximity=189, mutation=1)
+    Static (D=0): 780 edges (proximity=780, mutation=0)
+    RLM (D=2, no MKG): 780 edges (proximity=780, mutation=0)
+    Full SCA (D=2, h=2): 780 edges (proximity=780, mutation=0)
 
   --- Model: mild_degraded ---
-  Configuration                Viols    VRate  1stViol  RegExpl  RegViol    Bound   Accept   Time
-  ---------------------------------------------------------------------------------------
-  Static (D=0)                19/85     0.224        1   15/20         8   0.8275       No   0.1s
-  RLM (D=2, no MKG)          194/280    0.693        1   15/20         8   0.9675       No   0.4s
-  Full SCA (D=2, h=2)        194/280    0.693        1   15/20         8   0.9675       No   0.4s
+  Configuration                Viols    VRate   Frontier   FVRate  RegExpl  RegViol    Bound   Accept   Time
+  -----------------------------------------------------------------------------------------------------------
+  Static (D=0)                12/70     0.171    3/20       0.150   20/40         9   0.9154       No   0.1s
+  RLM (D=2, no MKG)          116/172    0.674   12/20       0.600   20/40        10   0.9913       No   0.2s
+  Full SCA (D=2, h=2)        140/212    0.660   36/60       0.600   20/40        10   0.9784       No   0.3s
 
   Violations by Recursion Depth:
   Depth               Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
-  0           19/85                  22/85                  22/85              
-  1                            ---    46/57                  46/57              
-  2                            ---   126/138                126/138             
+  0           12/70                  21/70                  45/110             
+  1                            ---    25/27                  25/27              
+  2                            ---    70/75                  70/75              
 
   Violations by Mutation Operator:
   Mutation                      Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
-  escalation                             ---    48/56                  48/56              
-  frontier_probe         0/5                    3/5                    3/5               
-  paraphrase                             ---    51/54                  51/54              
-  seed                  19/80                  19/80                  19/80              
-  template                               ---    31/43                  31/43              
-  tool_pivot                             ---    42/42                  42/42              
+  escalation                             ---    25/29                  25/29              
+  frontier_probe         3/20                  12/20                  36/60              
+  paraphrase                             ---    27/27                  27/27              
+  seed                   9/50                   9/50                   9/50              
+  template                               ---    23/24                  23/24              
+  tool_pivot                             ---    20/22                  20/22              
 
   MKG Graph Structure:
-    Static (D=0): 190 edges (proximity=190, mutation=0)
-    RLM (D=2, no MKG): 190 edges (proximity=174, mutation=16)
-    Full SCA (D=2, h=2): 190 edges (proximity=174, mutation=16)
+    Static (D=0): 780 edges (proximity=780, mutation=0)
+    RLM (D=2, no MKG): 780 edges (proximity=773, mutation=7)
+    Full SCA (D=2, h=2): 780 edges (proximity=773, mutation=7)
 
   --- Model: attacked_severe ---
-  Configuration                Viols    VRate  1stViol  RegExpl  RegViol    Bound   Accept   Time
-  ---------------------------------------------------------------------------------------
-  Static (D=0)                50/85     0.588        1   15/20        13   0.9802       No   0.1s
-  RLM (D=2, no MKG)          432/500    0.864        1   15/20        13   1.0000       No   0.6s
-  Full SCA (D=2, h=2)        432/500    0.864        1   15/20        13   1.0000       No   0.6s
+  Configuration                Viols    VRate   Frontier   FVRate  RegExpl  RegViol    Bound   Accept   Time
+  -----------------------------------------------------------------------------------------------------------
+  Static (D=0)                42/70     0.600   13/20       0.650   20/40        18   0.9986       No   0.1s
+  RLM (D=2, no MKG)          292/343    0.851   15/18       0.833   22/40        21   1.0000       No   0.4s
+  Full SCA (D=2, h=2)        323/379    0.852   46/54       0.852   22/40        21   1.0000       No   0.5s
 
   Violations by Recursion Depth:
   Depth               Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
-  0           50/85                  45/80                  45/80              
-  1                            ---   120/135                120/135             
-  2                            ---   267/285                267/285             
+  0           42/70                  44/68                  75/104             
+  1                            ---    77/87                  77/87              
+  2                            ---   171/188                171/188             
 
   Violations by Mutation Operator:
   Mutation                      Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
-  escalation                             ---   107/113                107/113             
-  frontier_probe         5/5                                    ---                     ---
-  paraphrase                             ---   106/112                106/112             
-  seed                  45/80                  45/80                  45/80              
-  template                               ---    85/101                 85/101             
-  tool_pivot                             ---    89/94                  89/94              
+  escalation                             ---    67/76                  67/76              
+  frontier_probe        13/20                  15/18                  46/54              
+  paraphrase                             ---    75/79                  75/79              
+  seed                  29/50                  29/50                  29/50              
+  template                               ---    50/60                  50/60              
+  tool_pivot                             ---    56/60                  56/60              
 
   MKG Graph Structure:
-    Static (D=0): 190 edges (proximity=190, mutation=0)
-    RLM (D=2, no MKG): 190 edges (proximity=159, mutation=31)
-    Full SCA (D=2, h=2): 190 edges (proximity=159, mutation=31)
+    Static (D=0): 780 edges (proximity=780, mutation=0)
+    RLM (D=2, no MKG): 780 edges (proximity=737, mutation=43)
+    Full SCA (D=2, h=2): 780 edges (proximity=737, mutation=43)
 
 ===============================================================================================
 EXPERIMENT 2: Regression Subgraph Analysis (Delta_G)
@@ -98,36 +92,36 @@ EXPERIMENT 2: Regression Subgraph Analysis (Delta_G)
   Metric                             Clean Model  Attacked Model
   ------------------------------------------------------------
   Accepted                                    No              No
-  Certified Bound                         0.7429          0.9681
-  Total Violations                             0             342
-  Violation Rate                           0.000           0.855
-  Total Queries                               53             400
+  Certified Bound                         0.7230          0.9940
+  Total Violations                             1             342
+  Violation Rate                           0.018           0.855
+  Total Queries                               56             400
 
   Regression Subgraph Delta_G (eta=0.02):
-    6 regions: [0, 2, 3, 6, 11, 15]
+    6 regions: [0, 1, 2, 6, 10, 14]
 
   Minimal Explanation Set (gamma=0.01):
-    1 regions: [0]
+    1 regions: [1]
 
   Per-Region Comparison (Clean vs Attacked):
    Rgn      C_p      A_p    C_UCB    A_UCB    Delta   Regr   Expl     Wt
   ----------------------------------------------------------------
-     0    0.000    0.812    0.679    1.000    0.321      *      *  0.186
-     1    0.000    1.000    1.000    1.000    0.000                0.004
-     2    0.000    0.886    0.679    1.000    0.321      *         0.154
-     3    0.000    0.808    0.679    1.000    0.321      *         0.084
-     4    0.000    0.111    0.804    0.710   -0.094                0.102
-     5    0.000    1.000    1.000    1.000    0.000                0.002
-     6    0.000    0.926    0.635    1.000    0.365      *         0.154
-     7    0.000    0.857    1.000    1.000    0.000                0.018
-     8    0.000    1.000    1.000    1.000    0.000                0.022
+     0    0.000    0.909    0.899    1.000    0.101      *         0.152
+     1    0.000    0.794    0.499    0.972    0.474      *      *  0.216
+     2    0.000    0.911    0.599    1.000    0.401      *         0.098
+     3    0.000    0.000    1.000    1.000    0.000                0.002
+     4    0.000    1.000    1.000    1.000    0.000                0.012
+     5    0.200    0.974    1.000    1.000    0.000                0.054
+     6    0.000    0.763    0.635    1.000    0.365      *         0.156
+     7    0.000    0.000    1.000    1.000    0.000                0.004
+     8    0.000    1.000    1.000    1.000    0.000                0.044
      9    0.000    0.000    1.000    1.000    0.000                0.002
-    10    0.000    0.900    1.000    1.000    0.000                0.058
-    11    0.000    0.645    0.899    0.968    0.069      *         0.072
-    12    0.000    0.000    1.000    1.000    0.000                0.002
-    13    0.000    0.000    1.000    1.000    0.000                0.010
-    14    0.000    1.000    1.000    1.000    0.000                0.036
-    15    0.000    0.960    0.599    1.000    0.401      *         0.094
+    10    0.000    0.667    0.635    1.000    0.365      *         0.104
+    11    0.000    0.000    1.000    1.000    0.000                0.008
+    12    0.000    0.917    1.000    1.000    0.000                0.044
+    13    0.000    0.000    1.000    1.000    0.000                0.002
+    14    0.000    0.794    0.804    1.000    0.196      *         0.098
+    15    0.000    1.000    1.000    1.000    0.000                0.004
 
 ===============================================================================================
 EXPERIMENT 3: High Byzantine Fraction Stress Test
