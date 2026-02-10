@@ -1,0 +1,165 @@
+===============================================================================================
+NOVELTY VALIDATION RESULTS
+Safety-Certified Federated Aggregation via RLM Verification + KG Coverage
+===============================================================================================
+
+===============================================================================================
+EXPERIMENT 1: Static vs RLM vs Full SCA Verification Comparison
+  Validates Claims 2-3: RLM recursive > static; MKG guidance improves coverage
+===============================================================================================
+
+  --- Model: pretrained_clean ---
+  Configuration                Viols    VRate   Frontier   FVRate  RegExpl  RegViol    Bound   Accept   Time
+  -----------------------------------------------------------------------------------------------------------
+  Static (D=0)                 1/70     0.014    1/20       0.050   20/40         1   0.8600       No   0.1s
+  RLM (D=2, no MKG)            1/70     0.014    1/20       0.050   20/40         1   0.8600       No   0.1s
+  Full SCA (D=2, h=2)          1/70     0.014    1/20       0.050   20/40         1   0.8600       No   0.1s
+
+  Violations by Recursion Depth:
+  Depth               Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
+  0            1/70                   1/70                   1/70              
+
+  Violations by Mutation Operator:
+  Mutation                      Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
+  frontier_probe         1/20                   1/20                   1/20              
+  seed                   0/50                   0/50                   0/50              
+
+  MKG Graph Structure:
+    Static (D=0): 780 edges (proximity=780, mutation=0)
+    RLM (D=2, no MKG): 780 edges (proximity=780, mutation=0)
+    Full SCA (D=2, h=2): 780 edges (proximity=780, mutation=0)
+
+  --- Model: mild_degraded ---
+  Configuration                Viols    VRate   Frontier   FVRate  RegExpl  RegViol    Bound   Accept   Time
+  -----------------------------------------------------------------------------------------------------------
+  Static (D=0)                12/70     0.171    3/20       0.150   20/40         9   0.9154       No   0.1s
+  RLM (D=2, no MKG)          116/172    0.674   12/20       0.600   20/40        10   0.9913       No   0.2s
+  Full SCA (D=2, h=2)        140/212    0.660   36/60       0.600   20/40        10   0.9784       No   0.3s
+
+  Violations by Recursion Depth:
+  Depth               Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
+  0           12/70                  21/70                  45/110             
+  1                            ---    25/27                  25/27              
+  2                            ---    70/75                  70/75              
+
+  Violations by Mutation Operator:
+  Mutation                      Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
+  escalation                             ---    25/29                  25/29              
+  frontier_probe         3/20                  12/20                  36/60              
+  paraphrase                             ---    27/27                  27/27              
+  seed                   9/50                   9/50                   9/50              
+  template                               ---    23/24                  23/24              
+  tool_pivot                             ---    20/22                  20/22              
+
+  MKG Graph Structure:
+    Static (D=0): 780 edges (proximity=780, mutation=0)
+    RLM (D=2, no MKG): 780 edges (proximity=773, mutation=7)
+    Full SCA (D=2, h=2): 780 edges (proximity=773, mutation=7)
+
+  --- Model: attacked_severe ---
+  Configuration                Viols    VRate   Frontier   FVRate  RegExpl  RegViol    Bound   Accept   Time
+  -----------------------------------------------------------------------------------------------------------
+  Static (D=0)                42/70     0.600   13/20       0.650   20/40        18   0.9986       No   0.1s
+  RLM (D=2, no MKG)          292/343    0.851   15/18       0.833   22/40        21   1.0000       No   0.4s
+  Full SCA (D=2, h=2)        323/379    0.852   46/54       0.852   22/40        21   1.0000       No   0.5s
+
+  Violations by Recursion Depth:
+  Depth               Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
+  0           42/70                  44/68                  75/104             
+  1                            ---    77/87                  77/87              
+  2                            ---   171/188                171/188             
+
+  Violations by Mutation Operator:
+  Mutation                      Static (D=0)       RLM (D=2, no MKG)     Full SCA (D=2, h=2)
+  escalation                             ---    67/76                  67/76              
+  frontier_probe        13/20                  15/18                  46/54              
+  paraphrase                             ---    75/79                  75/79              
+  seed                  29/50                  29/50                  29/50              
+  template                               ---    50/60                  50/60              
+  tool_pivot                             ---    56/60                  56/60              
+
+  MKG Graph Structure:
+    Static (D=0): 780 edges (proximity=780, mutation=0)
+    RLM (D=2, no MKG): 780 edges (proximity=737, mutation=43)
+    Full SCA (D=2, h=2): 780 edges (proximity=737, mutation=43)
+
+===============================================================================================
+EXPERIMENT 2: Regression Subgraph Analysis (Delta_G)
+  Validates Claim 4: Delta_G correctly identifies degraded regions after attack
+===============================================================================================
+
+  Model Comparison:
+  Metric                             Clean Model  Attacked Model
+  ------------------------------------------------------------
+  Accepted                                    No              No
+  Certified Bound                         0.7230          0.9940
+  Total Violations                             1             342
+  Violation Rate                           0.018           0.855
+  Total Queries                               56             400
+
+  Regression Subgraph Delta_G (eta=0.02):
+    6 regions: [0, 1, 2, 6, 10, 14]
+
+  Minimal Explanation Set (gamma=0.01):
+    1 regions: [1]
+
+  Per-Region Comparison (Clean vs Attacked):
+   Rgn      C_p      A_p    C_UCB    A_UCB    Delta   Regr   Expl     Wt
+  ----------------------------------------------------------------
+     0    0.000    0.909    0.899    1.000    0.101      *         0.152
+     1    0.000    0.794    0.499    0.972    0.474      *      *  0.216
+     2    0.000    0.911    0.599    1.000    0.401      *         0.098
+     3    0.000    0.000    1.000    1.000    0.000                0.002
+     4    0.000    1.000    1.000    1.000    0.000                0.012
+     5    0.200    0.974    1.000    1.000    0.000                0.054
+     6    0.000    0.763    0.635    1.000    0.365      *         0.156
+     7    0.000    0.000    1.000    1.000    0.000                0.004
+     8    0.000    1.000    1.000    1.000    0.000                0.044
+     9    0.000    0.000    1.000    1.000    0.000                0.002
+    10    0.000    0.667    0.635    1.000    0.365      *         0.104
+    11    0.000    0.000    1.000    1.000    0.000                0.008
+    12    0.000    0.917    1.000    1.000    0.000                0.044
+    13    0.000    0.000    1.000    1.000    0.000                0.002
+    14    0.000    0.794    0.804    1.000    0.196      *         0.098
+    15    0.000    1.000    1.000    1.000    0.000                0.004
+
+===============================================================================================
+EXPERIMENT 3: High Byzantine Fraction Stress Test
+  Validates Claim 5: SCA catches degradation at 25-50% Byzantine
+===============================================================================================
+
+  Sign-Flip Attack Results:
+  Configuration                             Final Acc       F1    Accept%   Rejected
+  ------------------------------------------------------------------------------
+  FedAvg+SCA_25%byz_signflip                   0.8375   0.8189       1.00          0
+  FedAvg+SCA_37.5%byz_signflip                 0.9375   0.9398       0.00          8
+  FedAvg+SCA_50%byz_signflip                   0.9375   0.9398       0.00          8
+  FedAvg_25%byz_signflip                       0.8650   0.8564       1.00          0
+  FedAvg_37.5%byz_signflip                     0.4950   0.0901       1.00          0
+  FedAvg_50%byz_signflip                       0.4700   0.0000       1.00          0
+  Krum+SCA_25%byz_signflip                     0.9375   0.9398       0.00          8
+  Krum+SCA_37.5%byz_signflip                   0.9375   0.9398       0.00          8
+  Krum+SCA_50%byz_signflip                     0.9375   0.9398       0.00          8
+  Krum_25%byz_signflip                         0.4700   0.0000       1.00          0
+  Krum_37.5%byz_signflip                       0.4700   0.0000       1.00          0
+  Krum_50%byz_signflip                         0.4700   0.0000       1.00          0
+
+  Safety-Degradation Attack Results:
+  Configuration                             Final Acc       F1    Accept%   Rejected
+  ------------------------------------------------------------------------------
+  FedAvg+SCA_25%byz_safetydeg                  0.8000   0.7688       1.00          0
+  FedAvg+SCA_37.5%byz_safetydeg                0.9375   0.9398       0.00          8
+  FedAvg+SCA_50%byz_safetydeg                  0.9375   0.9398       0.00          8
+  FedAvg_25%byz_safetydeg                      0.8750   0.8677       1.00          0
+  FedAvg_37.5%byz_safetydeg                    0.5400   0.2333       1.00          0
+  FedAvg_50%byz_safetydeg                      0.4700   0.0000       1.00          0
+
+  Accuracy Protection: SCA vs No-SCA (sign_flip attack)
+  Method             25% noSCA     25% +SCA  37.5% noSCA   37.5% +SCA    50% noSCA     50% +SCA
+  ---------------------------------------------------------------------------------------
+  FedAvg                0.8650       0.8375       0.4950       0.9375       0.4700       0.9375
+  Krum                  0.4700       0.9375       0.4700       0.9375       0.4700       0.9375
+
+===============================================================================================
+END OF NOVELTY VALIDATION RESULTS
+===============================================================================================

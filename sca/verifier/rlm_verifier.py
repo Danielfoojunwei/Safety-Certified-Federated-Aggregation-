@@ -91,6 +91,8 @@ class RLMVerifier:
         total_budget: int = 200,
         neighborhood_hops: int = 2,
         seed: int = 42,
+        reserve_frontier_fraction: float = 0.0,
+        probes_per_focus: int = 1,
     ) -> None:
         """
         Args:
@@ -103,6 +105,14 @@ class RLMVerifier:
             total_budget: Total number of model queries m.
             neighborhood_hops: Hops r for graph-guided sampling.
             seed: Random seed for reproducibility.
+            reserve_frontier_fraction: Fraction of budget reserved for
+                frontier exploration (Section 5.2). Recursion is limited
+                to total_budget * (1 - reserve_frontier_fraction). Default
+                0.0 preserves original behavior.
+            probes_per_focus: Number of probes per MKG-focused region
+                during frontier exploration (Section 5.2: concentrate
+                samples in neighborhoods of failure regions). Default 1
+                preserves original behavior.
         """
         self.phi = safety_predicate
         self.embedder = embedder
@@ -113,6 +123,11 @@ class RLMVerifier:
         self.total_budget = total_budget
         self.neighborhood_hops = neighborhood_hops
         self.rng = random.Random(seed)
+        self.reserve_frontier_fraction = reserve_frontier_fraction
+        self.probes_per_focus = probes_per_focus
+        self._recursion_budget = int(
+            total_budget * (1 - reserve_frontier_fraction)
+        )
 
     def verify(
         self,
@@ -224,6 +239,7 @@ class RLMVerifier:
         """Expand the recursion tree from discovered failures (Section 6.1).
 
         For each violation found, generate B mutated children up to depth D.
+        Respects _recursion_budget to reserve queries for frontier exploration.
         """
         # Find traces with violations that can be expanded
         expansion_queue = [
@@ -233,12 +249,12 @@ class RLMVerifier:
         ]
 
         for parent_idx, parent_trace in expansion_queue:
-            if state.total_queries >= self.total_budget:
+            if state.total_queries >= self._recursion_budget:
                 break
 
             # Generate B children via mutation
             for _ in range(self.branching_factor):
-                if state.total_queries >= self.total_budget:
+                if state.total_queries >= self._recursion_budget:
                     break
 
                 child_interaction = self.mutator.mutate(
@@ -295,6 +311,8 @@ class RLMVerifier:
         # Combine frontier and focus regions, prioritizing focus
         target_regions = list(focus_regions) + list(frontier - focus_regions)
 
+        # Concentrated probing: focus regions get multiple probes
+        # (Section 5.2: concentrate samples in neighborhoods of failures)
         for region_id in target_regions:
             if state.total_queries >= self.total_budget:
                 break
@@ -303,16 +321,19 @@ class RLMVerifier:
                 continue
 
             region = self.mkg.partition.regions[region_id]
+            n_probes = self.probes_per_focus if region_id in focus_regions else 1
 
-            # Generate a probe interaction for this region by perturbing
-            # a known interaction near the centroid
-            probe = self._generate_region_probe(region, state)
-            if probe is not None:
-                self._evaluate_and_record(
-                    model_fn, probe, state,
-                    depth=0, parent_idx=-1,
-                    mutation_type="frontier_probe",
-                )
+            for _ in range(n_probes):
+                if state.total_queries >= self.total_budget:
+                    break
+
+                probe = self._generate_region_probe(region, state)
+                if probe is not None:
+                    self._evaluate_and_record(
+                        model_fn, probe, state,
+                        depth=0, parent_idx=-1,
+                        mutation_type="frontier_probe",
+                    )
 
     def _generate_region_probe(
         self,
@@ -352,6 +373,8 @@ class RLMVerifier:
             "branching_factor": self.branching_factor,
             "total_budget": self.total_budget,
             "neighborhood_hops": self.neighborhood_hops,
+            "reserve_frontier_fraction": self.reserve_frontier_fraction,
+            "probes_per_focus": self.probes_per_focus,
             "mutator": self.mutator.name,
             "predicate_type": type(self.phi).__name__,
         }
