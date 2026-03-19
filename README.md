@@ -1,4 +1,6 @@
 # Safety-Certified Federated Aggregation via Recursive Language Model Verification and Knowledge-Graph Coverage
+<img width="1280" height="714" alt="image" src="https://github.com/user-attachments/assets/f73bfb6f-fac1-41d3-8c1d-3ed55f2a454c" />
+
 
 > A commit-gated federated learning protocol with provable behavioral safety guarantees, adaptive recursive verification, and interpretable failure diagnostics.
 
