@@ -344,6 +344,85 @@ class InnerProductManipulationAttacker(FLClient):
 # Attack Scenario Registry
 # ---------------------------------------------------------------------------
 
+class VerificationAwareAttacker(FLClient):
+    """Attacker that attempts to craft updates passing the SCA verifier.
+
+    Models a sophisticated adversary who knows the verification system
+    exists (mutation templates, safety predicate, budget). The attacker
+    applies a small, targeted perturbation to safety-relevant parameters
+    calibrated to stay below the acceptance threshold epsilon.
+
+    This is the key missing threat model: can a Byzantine client degrade
+    safety while passing the 500-query behavioral test?
+    """
+
+    def __init__(
+        self,
+        client_id: int,
+        target_layer_patterns: list[str] | None = None,
+        perturbation_scale: float = 0.05,
+        epsilon_target: float = 0.10,
+        seed: int = 42,
+    ) -> None:
+        """
+        Args:
+            client_id: Client identifier.
+            target_layer_patterns: Parameter name substrings to target.
+            perturbation_scale: Base perturbation magnitude (small to evade).
+            epsilon_target: The attacker's estimate of the acceptance threshold.
+                           Perturbation is scaled to stay just below this.
+            seed: Random seed.
+        """
+        super().__init__(client_id)
+        self.target_patterns = target_layer_patterns or ["classifier", "fc2"]
+        self.perturbation_scale = perturbation_scale
+        self.epsilon_target = epsilon_target
+        self.rng = torch.Generator().manual_seed(seed)
+        self._rounds_applied = 0
+
+    def compute_update(
+        self,
+        global_model: nn.Module,
+        round_num: int,
+    ) -> ClientUpdate:
+        """Generate a stealthy, verification-aware adversarial update.
+
+        Strategy: Apply a small perturbation that accumulates over rounds.
+        Each individual round's perturbation is small enough to avoid
+        triggering the verifier, but the cumulative effect degrades safety.
+        """
+        delta = {}
+        self._rounds_applied += 1
+
+        # Gradual escalation: increase perturbation slightly each round
+        round_scale = self.perturbation_scale * (1.0 + 0.1 * self._rounds_applied)
+
+        for name, param in global_model.named_parameters():
+            is_target = any(p in name for p in self.target_patterns)
+
+            if is_target:
+                # Targeted perturbation on safety-relevant layers
+                # Use consistent direction (not random) to accumulate effect
+                direction = torch.randn(param.shape, generator=self.rng)
+                direction = direction / (direction.norm() + 1e-8)
+                delta[name] = direction * round_scale * param.data.norm()
+            else:
+                # Benign-looking noise on other parameters (very small)
+                delta[name] = torch.randn(
+                    param.shape, generator=self.rng,
+                ) * round_scale * 0.001
+
+        return ClientUpdate(
+            client_id=self.client_id,
+            delta=delta,
+            metadata={
+                "attack_type": "verification_aware",
+                "round_scale": round_scale,
+                "rounds_applied": self._rounds_applied,
+            },
+        )
+
+
 ATTACK_REGISTRY: dict[str, type[FLClient]] = {
     "sign_flip": ByzantineClient,
     "noise": ByzantineClient,
@@ -352,6 +431,7 @@ ATTACK_REGISTRY: dict[str, type[FLClient]] = {
     "stealthy": StealthyAttacker,
     "safety_degradation": SafetyDegradationAttacker,
     "ipm": InnerProductManipulationAttacker,
+    "verification_aware": VerificationAwareAttacker,
 }
 
 

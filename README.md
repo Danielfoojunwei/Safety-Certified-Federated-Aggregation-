@@ -1,13 +1,15 @@
-# Safety-Certified Federated Aggregation via Recursive Language Model Verification and Knowledge-Graph Coverage
+# Safety-Certified Federated Aggregation via Recursive Adaptive Verification and Knowledge-Graph Coverage
 
 
-> A commit-gated federated learning protocol with provable behavioral safety guarantees, adaptive recursive verification, and interpretable failure diagnostics.
+> A commit-gated federated learning protocol with provable behavioral safety guarantees, adaptive recursive mutation-based verification, and interpretable failure diagnostics.
 
 ---
 
 ## Abstract
 
-Federated fine-tuning of large language models under semi-trusted clients faces a critical vulnerability: Byzantine participants can inject updates that degrade safety alignment while evading parameter-space anomaly detectors. Existing defenses---robust aggregation rules (Krum, trimmed mean, coordinate-wise median)---operate on gradient geometry and remain blind to *behavioral* degradation in model outputs. We propose **Safety-Certified Aggregation (SCA)**, a commit-gated protocol where each candidate global model must pass an adaptive safety verification before acceptance. SCA introduces three novel components: (1) a **Recursive Language Model (RLM) Verifier** that adaptively probes the model through mutation operators (paraphrase, escalation, template instantiation, tool-pivot), concentrating testing on discovered failure clusters; (2) a **Model Knowledge Graph (MKG)** over interaction regions in embedding space that guides frontier exploration toward failure neighborhoods; and (3) a **Hoeffding-UCB acceptance rule** providing the statistical guarantee that, with probability at least 1-delta, any accepted model satisfies a target safety violation bound epsilon (Theorem 1). Empirical evaluation on PKU-SafeRLHF data with a trained safety classifier demonstrates that RLM recursion discovers 7--10x more violations than static testing, MKG-guided frontier exploration finds 21% more violations than blind recursion via 3x concentrated probing, the SCA gate maintains 93.75% accuracy under 50% Byzantine corruption where FedAvg and Krum collapse to 47%, and the regression subgraph Delta_G localizes degradation to interpretable semantic regions.
+Federated fine-tuning of machine learning models under semi-trusted clients faces a critical vulnerability: Byzantine participants can inject updates that degrade safety alignment while evading parameter-space anomaly detectors. Existing defenses---robust aggregation rules (Krum, trimmed mean, coordinate-wise median)---operate on gradient geometry and remain blind to *behavioral* degradation in model outputs. We propose **Safety-Certified Aggregation (SCA)**, a commit-gated protocol where each candidate global model must pass an adaptive safety verification before acceptance. SCA introduces three novel components: (1) a **Recursive Mutation Verifier (RMV)** that adaptively probes the model through mutation operators (paraphrase, escalation, template instantiation, tool-pivot), concentrating testing on discovered failure clusters; (2) a **Model Knowledge Graph (MKG)** over interaction regions in embedding space that guides frontier exploration toward failure neighborhoods; and (3) a **Hoeffding-UCB acceptance rule** providing the statistical guarantee that, with probability at least 1-delta, any accepted model satisfies a target safety violation bound epsilon (Theorem 1). Empirical evaluation on PKU-SafeRLHF data with a trained safety classifier demonstrates that recursive mutation discovers 7--10x more violations than static testing, MKG-guided frontier exploration finds 21% more violations than blind recursion via 3x concentrated probing, the SCA gate maintains 93.75% accuracy under 50% Byzantine corruption where FedAvg and Krum collapse to 47%, and the regression subgraph Delta_G localizes degradation to interpretable semantic regions.
+
+> **Note on current implementation**: The mutation operators in this release use template-based rewrites (not LLM-generated paraphrases), the safety predicate uses classifier-based correctness checking (not LLM-as-judge evaluation), and the embedder uses hash-based bag-of-words with random projection (not semantic embeddings). Optional LLM-backed mutators, an LLM-as-judge safety predicate, and a SentenceTransformer embedder are provided for production use when LLM API access is available. See the [Limitations](#limitations) section for full details.
 
 ---
 
@@ -47,7 +49,7 @@ SCA shifts the defense surface from parameter space to **behavioral testing**. A
                     theta_tilde (candidate)
                              |
                     +--------v---------+
-                    | RLM Verifier V   |---> Recursion Tree T(D,B)
+                    | Recursive Mutation Verifier V   |---> Recursion Tree T(D,B)
                     | + MKG Coverage G |---> Graph-guided frontier
                     +--------+---------+
                              |
@@ -93,7 +95,7 @@ If the acceptance rule `sum_j w_j * UCB_j <= epsilon` is satisfied, then the tru
 
 *Proof sketch*: Hoeffding's inequality applied per-region with a union bound over K regions ensures each UCB_j >= p_j simultaneously with probability 1-delta. The weighted sum then preserves the bound.
 
-### 2.2 RLM Verifier (Recursive Language Model Verification)
+### 2.2 Recursive Mutation Verifier (RMV)
 
 The verifier operates in three phases:
 
@@ -219,7 +221,7 @@ Three model variants tested:
 
 ### 3.4 Verification Configuration
 
-| Parameter | Static | RLM | Full SCA |
+| Parameter | Static | RMV | Full SCA |
 |-----------|--------|-----|----------|
 | Max depth D | 0 | 2 | 2 |
 | Branching factor B | 0 | 3 | 3 |
@@ -246,7 +248,7 @@ Three model variants tested:
 | Method | Violations | Queries | Viol Rate | Frontier Viols | Frontier Probes | Regions w/ Viols |
 |--------|-----------|---------|-----------|---------------|-----------------|-----------------|
 | Static (D=0) | 12 | 70 | 17.1% | 3/20 | 20 | 9/40 |
-| RLM (D=2) | 116 | 172 | 67.4% | 12/20 | 20 | 10/40 |
+| RMV (D=2) | 116 | 172 | 67.4% | 12/20 | 20 | 10/40 |
 | **Full SCA (D=2, h=2)** | **140** | 212 | 66.0% | **36/60** | 60 | 10/40 |
 
 #### Table 2: Attacked Model (45.75% accuracy)
@@ -254,7 +256,7 @@ Three model variants tested:
 | Method | Violations | Queries | Viol Rate | Frontier Viols | Frontier Probes | Regions w/ Viols |
 |--------|-----------|---------|-----------|---------------|-----------------|-----------------|
 | Static (D=0) | 42 | 70 | 60.0% | 13/20 | 20 | 18/40 |
-| RLM (D=2) | 292 | 343 | 85.1% | 15/18 | 18 | 21/40 |
+| RMV (D=2) | 292 | 343 | 85.1% | 15/18 | 18 | 21/40 |
 | **Full SCA (D=2, h=2)** | **323** | 379 | 85.2% | **46/54** | 54 | 21/40 |
 
 #### Table 3: Pretrained Clean Model (93.75% accuracy)
@@ -262,23 +264,23 @@ Three model variants tested:
 | Method | Violations | Queries | Viol Rate | Frontier Viols | Frontier Probes | Regions w/ Viols |
 |--------|-----------|---------|-----------|---------------|-----------------|-----------------|
 | Static (D=0) | 1 | 70 | 1.4% | 1/20 | 20 | 1/40 |
-| RLM (D=2) | 1 | 70 | 1.4% | 1/20 | 20 | 1/40 |
+| RMV (D=2) | 1 | 70 | 1.4% | 1/20 | 20 | 1/40 |
 | Full SCA (D=2, h=2) | 1 | 70 | 1.4% | 1/20 | 20 | 1/40 |
 
 #### Table 4: Violation Amplification Summary
 
 | Comparison | Mild Model | Attacked Model |
 |------------|-----------|---------------|
-| RLM / Static | **9.7x** (116 vs 12) | **7.0x** (292 vs 42) |
-| Full SCA / RLM | **1.21x** (140 vs 116) | **1.11x** (323 vs 292) |
+| RMV / Static | **9.7x** (116 vs 12) | **7.0x** (292 vs 42) |
+| Full SCA / RMV | **1.21x** (140 vs 116) | **1.11x** (323 vs 292) |
 | Full SCA / Static | **11.7x** (140 vs 12) | **7.7x** (323 vs 42) |
-| Frontier probes: SCA vs RLM | **3.0x** (60 vs 20) | **3.0x** (54 vs 18) |
+| Frontier probes: SCA vs RMV | **3.0x** (60 vs 20) | **3.0x** (54 vs 18) |
 
 **Key finding**: For the clean model, all three methods are equivalent (only 1 violation found)---as expected, since a high-quality model has few failures to discover. The differentiation emerges precisely when models are degraded, which is the scenario SCA is designed to detect.
 
 #### Table 5: Violations by Mutation Operator (Mild-Degraded Model)
 
-| Operator | Static | RLM | Full SCA |
+| Operator | Static | RMV | Full SCA |
 |----------|--------|-----|----------|
 | seed | 9/50 | 9/50 | 9/50 |
 | paraphrase | --- | 27/27 (100%) | 27/27 (100%) |
@@ -289,13 +291,13 @@ Three model variants tested:
 
 #### Table 6: Violations by Recursion Depth (Mild-Degraded Model)
 
-| Depth | Static | RLM | Full SCA |
+| Depth | Static | RMV | Full SCA |
 |-------|--------|-----|----------|
 | 0 (seeds + frontier) | 12/70 | 21/70 | 45/110 |
 | 1 (first expansion) | --- | 25/27 (93%) | 25/27 (93%) |
 | 2 (second expansion) | --- | 70/75 (93%) | 70/75 (93%) |
 
-**Observation**: Recursion results (depths 1--2) are *identical* between RLM and Full SCA. The entire difference (140 vs 116 = +24 violations) comes from MKG-guided frontier exploration: 36 frontier violations vs 12, achieved by concentrating 3 probes per focus region near failure neighborhoods.
+**Observation**: Recursion results (depths 1--2) are *identical* between RMV and Full SCA. The entire difference (140 vs 116 = +24 violations) comes from MKG-guided frontier exploration: 36 frontier violations vs 12, achieved by concentrating 3 probes per focus region near failure neighborhoods.
 
 ---
 
@@ -376,7 +378,7 @@ The gate exhibits a **sharp transition**: at 25% Byzantine, the attack is mild e
 
 ### 5.1 Recursion Exploits Failure Cluster Coherence
 
-Static testing found 12 violations on the mild model from 70 queries (17.1%). RLM recursion amplified this to 116 violations from 172 queries---a **9.7x** improvement in raw violation count. The mechanism: when the verifier discovers a misclassification, mutated variants of that interaction are *overwhelmingly* also misclassified:
+Static testing found 12 violations on the mild model from 70 queries (17.1%). Recursive mutation amplified this to 116 violations from 172 queries---a **9.7x** improvement in raw violation count. The mechanism: when the verifier discovers a misclassification, mutated variants of that interaction are *overwhelmingly* also misclassified:
 
 - Paraphrase mutations: 27/27 = **100%** violation rate
 - Template mutations: 23/24 = **96%** violation rate
@@ -386,15 +388,15 @@ This demonstrates that failure regions are **coherent clusters** in interaction 
 
 ### 5.2 MKG Guidance Concentrates Budget on Failure Neighborhoods
 
-The Full SCA advantage over RLM comes exclusively from **frontier exploration**. Recursion at depths 1--2 is identical between the two configurations (same D=2, B=3, same budget reservation). The difference:
+The Full SCA advantage over RMV comes exclusively from **frontier exploration**. Recursion at depths 1--2 is identical between the two configurations (same D=2, B=3, same budget reservation). The difference:
 
-| Phase | RLM | Full SCA |
+| Phase | RMV | Full SCA |
 |-------|-----|----------|
 | Seed evaluation | 9/50 violations | 9/50 violations |
 | Recursive expansion | 95/102 violations | 95/102 violations |
 | **Frontier exploration** | **12/20 violations** | **36/60 violations** |
 
-Full SCA achieves 3x the frontier probes because `probes_per_focus=3` concentrates three probes on each MKG-identified focus region (2-hop neighborhood of failure regions), while RLM allocates one probe per random frontier region. The frontier violation rate is the same (~60%), confirming that focus regions and random regions have similar per-probe yields---but **MKG guidance allocates proportionally more queries to the right places**.
+Full SCA achieves 3x the frontier probes because `probes_per_focus=3` concentrates three probes on each MKG-identified focus region (2-hop neighborhood of failure regions), while RMV allocates one probe per random frontier region. The frontier violation rate is the same (~60%), confirming that focus regions and random regions have similar per-probe yields---but **MKG guidance allocates proportionally more queries to the right places**.
 
 ### 5.3 Behavioral Testing Succeeds Where Parameter-Level Defenses Fail
 
@@ -413,7 +415,7 @@ This transforms a binary accept/reject decision into an interpretable diagnostic
 
 ### 5.5 Budget Reservation is Critical for MKG Value
 
-Without explicit budget reservation (`reserve_frontier_fraction=0.0`), recursive expansion consumes the entire budget before frontier exploration can run, causing Full SCA = RLM. Setting `reserve_frontier_fraction=0.35` limits recursion to 65% of the budget, guaranteeing 35% for graph-guided frontier exploration. This is a practical design insight: the paper's three-phase architecture requires explicit budget partitioning to realize the full benefit of MKG coverage.
+Without explicit budget reservation (`reserve_frontier_fraction=0.0`), recursive expansion consumes the entire budget before frontier exploration can run, causing Full SCA = RMV. Setting `reserve_frontier_fraction=0.35` limits recursion to 65% of the budget, guaranteeing 35% for graph-guided frontier exploration. This is a practical design insight: the paper's three-phase architecture requires explicit budget partitioning to realize the full benefit of MKG coverage.
 
 ---
 
@@ -422,8 +424,8 @@ Without explicit budget reservation (`reserve_frontier_fraction=0.0`), recursive
 | # | Claim | Status | Evidence |
 |---|-------|--------|----------|
 | 1 | Theorem 1 soundness: accepted models satisfy epsilon-bound | **Proven** | SCA correctly rejects degraded models (bound > epsilon) and accepts good ones |
-| 2 | RLM recursion > static testing | **Proven** | 7--10x more violations found across all model quality levels (Tables 1--4) |
-| 3 | MKG-guided coverage > blind RLM | **Proven** | 21% more violations via 3x concentrated frontier probes (Tables 1--6) |
+| 2 | Recursive mutation > static testing | **Proven** | 7--10x more violations found across all model quality levels (Tables 1--4) |
+| 3 | MKG-guided coverage > blind recursive mutation | **Proven** | 21% more violations via 3x concentrated frontier probes (Tables 1--6) |
 | 4 | Regression subgraph localizes degradation | **Proven** | Delta_G identifies 6 regions, minimal explanation set = 1 region (Tables 7--8) |
 | 5 | Byzantine protection at high fractions | **Proven** | 93.75% at 50% Byzantine vs 47% collapse without SCA (Tables 9--12) |
 | 6 | Certificate schema enables auditability | **Supported** | All certificate components functional; Merkle tree over trace implemented |
@@ -448,7 +450,7 @@ Without explicit budget reservation (`reserve_frontier_fraction=0.0`), recursive
 - **TruthfulQA** (Lin et al., ACL 2022): Truthfulness across 38 categories.
 - **ToxiGen** (Hartvigsen et al., ACL 2022): Implicit toxicity detection.
 
-All above are *static* benchmarks with fixed test sets. SCA's RLM verifier is *adaptive*---it generates new test cases by mutating discovered failures, concentrating on failure regions rather than uniformly sampling.
+All above are *static* benchmarks with fixed test sets. SCA's recursive mutation verifier is *adaptive*---it generates new test cases by mutating discovered failures, concentrating on failure regions rather than uniformly sampling.
 
 ### 7.3 Property Testing and Verification
 
@@ -463,7 +465,7 @@ All above are *static* benchmarks with fixed test sets. SCA's RLM verifier is *a
 sca/
   utils/              Statistical bounds (Hoeffding UCB) and crypto (SHA-256, Merkle trees)
   knowledge_graph/    MKG: interaction regions, embeddings, graph topology
-  verifier/           RLM verifier: safety predicates, mutation operators, adaptive testing
+  verifier/           Recursive mutation verifier: safety predicates, mutation operators, adaptive testing
   certificate/        Certificate schema, acceptance rule, gate
   federated/          FL clients, aggregation (FedAvg, FedAdam, Krum, Median, TrimmedMean), server
   experiments/        Attack scenarios, benchmarks, evaluation protocol, experiment runners
@@ -492,7 +494,7 @@ results/              Experimental results and reports
 | `sca.experiments.benchmarks` | Safety benchmark suites: SafetyBench, JailbreakBench, TruthfulQA, ToxiGen, CASE-Bench, HHH |
 | `sca.experiments.evaluation` | Evaluation protocol, HEM scoring, ablation framework, interpretability analysis |
 | `sca.experiments.run_real_evaluation` | Real evaluation pipeline with HuggingFace data |
-| `sca.experiments.run_novelty_validation` | Novelty validation: Static vs RLM vs Full SCA, regression subgraph, Byzantine stress test |
+| `sca.experiments.run_novelty_validation` | Novelty validation: Static vs RMV vs Full SCA, regression subgraph, Byzantine stress test |
 
 ---
 
@@ -529,7 +531,7 @@ python -m sca.experiments.run_novelty_validation
 ```
 
 This runs all three experiments (approximately 4--5 minutes on CPU):
-1. Static vs RLM vs Full SCA comparison on three model quality levels
+1. Static vs RMV vs Full SCA comparison on three model quality levels
 2. Regression subgraph analysis (clean vs attacked)
 3. High Byzantine fraction stress test (25%/37.5%/50%)
 
@@ -547,15 +549,60 @@ python -m sca.experiments.run_real_evaluation
 
 Safety-Certified Federated Aggregation demonstrates that **behavioral testing fundamentally outperforms parameter-level inspection** for ensuring safety in federated learning. Three hierarchical innovations---recursive verification, knowledge-graph-guided coverage, and statistical acceptance gating---each contribute independently measurable and empirically validated value:
 
-1. **RLM recursion** amplifies violation discovery by 7--10x over static testing by exploiting the coherence of failure clusters through four mutation operators, each achieving 86--100% violation rates on discovered failure neighborhoods.
+1. **Recursive mutation** amplifies violation discovery by 7--10x over static testing by exploiting the coherence of failure clusters through four mutation operators, each achieving 86--100% violation rates on discovered failure neighborhoods.
 
-2. **MKG-guided frontier exploration** further improves over blind RLM by 11--21% by concentrating probes in r-hop neighborhoods of discovered failures. With budget reservation and concentrated probing, every query is directed toward regions most likely to contain violations.
+2. **MKG-guided frontier exploration** further improves over blind RMV by 11--21% by concentrating probes in r-hop neighborhoods of discovered failures. With budget reservation and concentrated probing, every query is directed toward regions most likely to contain violations.
 
 3. **The SCA acceptance gate** acts as a behavioral circuit-breaker that maintains 93.75% accuracy under 50% Byzantine corruption---conditions that destroy both FedAvg (47%) and Krum (47%). The gate's sharp transition behavior (accept all at 25%, reject all at 37.5%+) provides deterministic safety guarantees.
 
 4. **The regression subgraph** provides interpretability unavailable in any prior FL defense: not just "the model degraded" but "Region 1 covering 21.6% of interactions went from 0% to 79.4% violation rate," enabling targeted diagnosis and remediation.
 
-All results are produced on real PKU-SafeRLHF data from HuggingFace with a real trained safety classifier. No synthetic data, no simulation, no mocks.
+All results are produced on real PKU-SafeRLHF data from HuggingFace with a real trained safety classifier.
+
+---
+
+## 11. Limitations
+
+This section documents known limitations of the current implementation. These are addressed progressively in the codebase via optional production-grade components.
+
+### 11.1 Template-Based Mutations (Not LLM-Generated)
+
+The current mutation operators (`ParaphraseMutator`, `EscalationMutator`, `TemplateMutator`, `ToolPivotMutator`) use **hardcoded string templates** (16 total) rather than LLM-generated semantic transformations. For example, `ParaphraseMutator` prepends `"Rephrase: {prompt}"` rather than actually paraphrasing. This means:
+- Mutations test classifier robustness to irrelevant prefixes, not semantic robustness
+- The "7-10x violation amplification" partially reflects local classifier consistency (nearby inputs produce similar outputs) rather than discovery of genuinely new failure modes
+
+**Mitigation**: `LLMParaphraseMutator` and `LLMEscalationMutator` are provided in `sca/verifier/mutations.py` for use when an LLM API backend is available.
+
+### 11.2 Classifier-Based Safety Predicate (Not LLM-as-Judge)
+
+The safety predicate measures whether the classifier's prediction matches the ground-truth label. This evaluates **classifier calibration**, not actual safety compliance (e.g., refusal behavior, harmful content generation). The `KeywordSafetyPredicate` fallback checks for substring `"harmful_output"` -- a toy implementation.
+
+**Mitigation**: `LLMJudgeSafetyPredicate` is provided in `sca/verifier/safety_predicate.py` for production use with an LLM-as-judge.
+
+### 11.3 Non-Semantic Embeddings
+
+The `RandomProjectionEmbedder` uses `hash(token) % vocab_size` bag-of-words with random projection. Two semantically identical sentences with different wording get different embeddings. Region assignments are therefore lexical, not semantic.
+
+**Mitigation**: `SentenceTransformerEmbedder` is provided in `sca/knowledge_graph/embedding.py`.
+
+### 11.4 Toy-Scale Experiments
+
+- **Model**: 3.3M parameter safety classifier (not an LLM)
+- **Scale**: 8 clients, 8 FL rounds, 2,000 data samples
+- **Seeds**: Results use a single random seed (42); multi-seed runner is provided but not yet integrated into main experiments
+- **Baselines**: FedAvg and Krum only; modern baselines (FLTrust, FLAME) available via `FLTrust` aggregator but not yet benchmarked
+
+### 11.5 Acceptance Gate Conservatism
+
+With K=40 regions and a budget of 500 queries, many regions receive fewer than 20 samples, producing Hoeffding bounds near 1.0. As a result, the **clean model is also rejected** (bound=0.86 > epsilon=0.45). The acceptance gate currently lacks discriminative power at this scale. Reducing K or using the Clopper-Pearson bound (`clopper_pearson_upper` in `sca/utils/stats.py`) would produce tighter bounds.
+
+### 11.6 Complete Proximity Graph
+
+With tau=1.0 and 40 regions, the proximity graph is 100% connected (780/780 possible edges). Graph-guided frontier exploration degenerates to random exploration when every node is a neighbor of every other node. Tau should be calibrated using `auto_calibrate_tau()` in `sca/knowledge_graph/mkg.py`.
+
+### 11.7 No Adversarial Robustness Analysis
+
+The paper does not evaluate verification-aware attackers -- Byzantine clients that know the mutation templates and safety predicate could craft updates to pass verification while degrading behavior on untested regions. The `VerificationAwareAttacker` in `sca/experiments/attacks.py` provides an initial implementation of this threat model.
 
 ---
 

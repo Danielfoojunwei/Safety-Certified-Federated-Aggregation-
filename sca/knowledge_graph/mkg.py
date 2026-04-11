@@ -281,6 +281,51 @@ class ModelKnowledgeGraph:
 
         return sorted(result)
 
+    def auto_calibrate_tau(self, target_density: float = 0.3) -> float:
+        """Calibrate tau so the proximity graph has approximately target_density.
+
+        Addresses the problem where a hardcoded tau=1.0 can produce a
+        100%-connected graph (meaningless structure). Sets tau to the
+        quantile of pairwise centroid distances corresponding to the
+        target edge density.
+
+        Args:
+            target_density: Target fraction of possible edges to include.
+                           0.3 means ~30% of node pairs will be connected.
+
+        Returns:
+            The calibrated tau value.
+        """
+        regions = self.partition.regions
+        n = len(regions)
+        if n < 2:
+            return self.tau
+
+        # Compute all pairwise centroid distances
+        dists = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                d = float(np.linalg.norm(
+                    regions[i].centroid - regions[j].centroid
+                ))
+                dists.append(d)
+
+        if not dists:
+            return self.tau
+
+        # Set tau to the quantile matching the target density
+        self.tau = float(np.quantile(dists, target_density))
+        self._build_graph()
+        return self.tau
+
+    def get_edge_density(self) -> float:
+        """Return the fraction of possible edges that exist in the graph."""
+        n = self.graph.number_of_nodes()
+        if n < 2:
+            return 0.0
+        max_edges = n * (n - 1) / 2
+        return self.graph.number_of_edges() / max_edges
+
     def refresh_edges(self) -> None:
         """Rebuild proximity edges (call after adding new regions)."""
         self._build_graph()
