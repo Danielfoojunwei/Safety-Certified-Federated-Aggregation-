@@ -44,8 +44,11 @@ class InteractionEmbedder(ABC):
 class RandomProjectionEmbedder(InteractionEmbedder):
     """Embedding via random projection of bag-of-words features.
 
-    Suitable for simulation / prototyping. In a real system, this would
-    be replaced by a sentence transformer or similar learned encoder.
+    Simulation-grade embedder for prototyping. Uses hash-based bag-of-words
+    with random projection -- no semantic understanding. Two semantically
+    identical sentences with different wording will get different embeddings.
+
+    For production use, see SentenceTransformerEmbedder.
     """
 
     def __init__(self, vocab_size: int = 1000, embed_dim: int = 64,
@@ -65,6 +68,63 @@ class RandomProjectionEmbedder(InteractionEmbedder):
         if bow.sum() > 0:
             bow /= bow.sum()
         return bow @ self.projection
+
+
+class SentenceTransformerEmbedder(InteractionEmbedder):
+    """Semantic embedding via sentence-transformers (production-grade).
+
+    Uses a pretrained sentence transformer model to produce semantically
+    meaningful embeddings. Region assignments will reflect actual semantic
+    similarity, and mutations that change meaning will cross region boundaries.
+
+    Requires: ``pip install sentence-transformers``
+    """
+
+    def __init__(
+        self,
+        model_name: str = "all-MiniLM-L6-v2",
+        fields: list[str] | None = None,
+    ) -> None:
+        """
+        Args:
+            model_name: HuggingFace sentence-transformer model name.
+            fields: Interaction dict fields to concatenate for embedding.
+                   Defaults to ["prompt"].
+        """
+        try:
+            from sentence_transformers import SentenceTransformer
+            self.model = SentenceTransformer(model_name)
+            self._available = True
+        except ImportError:
+            self._available = False
+            self._fallback = RandomProjectionEmbedder()
+        self.fields = fields or ["prompt"]
+
+    def embed(self, interaction: dict) -> np.ndarray:
+        text = " ".join(
+            str(interaction.get(f, "")) for f in self.fields
+        ).strip()
+        if not text:
+            text = "empty"
+
+        if self._available:
+            return self.model.encode(text, show_progress_bar=False)
+
+        # Fallback to random projection if sentence-transformers unavailable
+        return self._fallback.embed(interaction)
+
+    def embed_batch(self, interactions: list[dict]) -> np.ndarray:
+        texts = []
+        for interaction in interactions:
+            text = " ".join(
+                str(interaction.get(f, "")) for f in self.fields
+            ).strip()
+            texts.append(text if text else "empty")
+
+        if self._available:
+            return self.model.encode(texts, show_progress_bar=False)
+
+        return np.stack([self._fallback.embed(x) for x in interactions])
 
 
 class PrecomputedEmbedder(InteractionEmbedder):

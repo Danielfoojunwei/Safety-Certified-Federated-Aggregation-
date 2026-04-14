@@ -143,12 +143,15 @@ class RegionPartition:
         if min_dist > self.tau_new:
             # Create new region (Section 6.2)
             new_id = len(self.regions)
+            # Initialize with minimum viable weight and re-normalize
+            min_weight = 1.0 / (len(self.regions) + 1)
             region = InteractionRegion(
                 region_id=new_id,
                 centroid=embedding.copy(),
-                weight=0.0,  # Weight will be updated
+                weight=min_weight,
             )
             self.regions.append(region)
+            self._renormalize_weights()
             return new_id
 
         return j
@@ -160,6 +163,13 @@ class RegionPartition:
         if total > 0:
             w /= total  # Normalize
         return w
+
+    def _renormalize_weights(self) -> None:
+        """Re-normalize all region weights to sum to 1."""
+        total = sum(r.weight for r in self.regions)
+        if total > 0:
+            for r in self.regions:
+                r.weight /= total
 
     def reset_all_stats(self) -> None:
         """Reset all region sample statistics for a new verification round."""

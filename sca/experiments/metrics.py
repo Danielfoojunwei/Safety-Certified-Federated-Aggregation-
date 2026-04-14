@@ -207,3 +207,124 @@ def aggregate_round_metrics(
             [b - v for b, v in zip(bounds, violation_rates)]
         )) if bounds else 0.0,
     }
+
+
+# ---------------------------------------------------------------------------
+# Multi-Seed Experiment Utilities
+# ---------------------------------------------------------------------------
+
+DEFAULT_SEEDS = [42, 123, 456, 789, 1024]
+
+
+def compute_confidence_interval(
+    values: list[float],
+    confidence: float = 0.95,
+) -> tuple[float, float, float]:
+    """Compute mean and confidence interval for a list of values.
+
+    Uses a t-distribution for small sample sizes.
+
+    Args:
+        values: Observed values across seeds.
+        confidence: Confidence level (default 0.95 for 95% CI).
+
+    Returns:
+        (mean, ci_lower, ci_upper)
+    """
+    n = len(values)
+    if n == 0:
+        return 0.0, 0.0, 0.0
+    if n == 1:
+        return values[0], values[0], values[0]
+
+    mean = float(np.mean(values))
+    std = float(np.std(values, ddof=1))
+    se = std / np.sqrt(n)
+
+    try:
+        from scipy.stats import t as t_dist
+        h = se * t_dist.ppf((1 + confidence) / 2, n - 1)
+    except ImportError:
+        # Fallback: use z-score for 95% CI
+        h = se * 1.96
+
+    return mean, mean - h, mean + h
+
+
+def format_with_ci(values: list[float], confidence: float = 0.95) -> str:
+    """Format a metric as 'mean +/- std [ci_low, ci_high]'.
+
+    Args:
+        values: Observed values across seeds.
+        confidence: Confidence level.
+
+    Returns:
+        Formatted string like '0.875 +/- 0.023 [0.849, 0.901]'
+    """
+    if not values:
+        return "N/A"
+    mean, ci_low, ci_high = compute_confidence_interval(values, confidence)
+    std = float(np.std(values, ddof=1)) if len(values) > 1 else 0.0
+    return f"{mean:.4f} +/- {std:.4f} [{ci_low:.4f}, {ci_high:.4f}]"
+
+
+@dataclass
+class MultiSeedResults:
+    """Results aggregated across multiple random seeds.
+
+    Attributes:
+        metric_name: Name of the metric.
+        values: Per-seed values.
+        seeds: Seeds used.
+    """
+    metric_name: str
+    values: list[float]
+    seeds: list[int]
+
+    @property
+    def mean(self) -> float:
+        return float(np.mean(self.values)) if self.values else 0.0
+
+    @property
+    def std(self) -> float:
+        return float(np.std(self.values, ddof=1)) if len(self.values) > 1 else 0.0
+
+    @property
+    def ci_95(self) -> tuple[float, float, float]:
+        return compute_confidence_interval(self.values, 0.95)
+
+    def __repr__(self) -> str:
+        return f"{self.metric_name}: {format_with_ci(self.values)}"
+
+
+def paired_significance_test(
+    values_a: list[float],
+    values_b: list[float],
+) -> tuple[float, float]:
+    """Paired Wilcoxon signed-rank test between two methods.
+
+    Args:
+        values_a: Per-seed values for method A.
+        values_b: Per-seed values for method B.
+
+    Returns:
+        (statistic, p_value). p_value < 0.05 suggests significant difference.
+    """
+    if len(values_a) != len(values_b) or len(values_a) < 3:
+        return 0.0, 1.0
+
+    try:
+        from scipy.stats import wilcoxon
+        stat, p_value = wilcoxon(values_a, values_b)
+        return float(stat), float(p_value)
+    except ImportError:
+        # Fallback: simple paired t-test
+        diffs = [a - b for a, b in zip(values_a, values_b)]
+        mean_diff = float(np.mean(diffs))
+        std_diff = float(np.std(diffs, ddof=1))
+        if std_diff < 1e-10:
+            return 0.0, 1.0 if abs(mean_diff) < 1e-10 else 0.0
+        t_stat = mean_diff / (std_diff / np.sqrt(len(diffs)))
+        # Two-tailed p-value approximation
+        p_value = 2.0 * (1.0 - 0.5 * (1.0 + np.tanh(0.7 * abs(t_stat))))
+        return float(t_stat), p_value

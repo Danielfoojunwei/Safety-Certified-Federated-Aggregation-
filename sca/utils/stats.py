@@ -150,6 +150,79 @@ def optimal_allocation(
     return alloc
 
 
+def bernstein_bound(p_hat: float, m: int, delta: float, k: int = 1) -> float:
+    """Empirical Bernstein confidence width for a Bernoulli mean.
+
+    Tighter than Hoeffding when the true variance is small (i.e., when
+    violations are rare or very common). Width is:
+        sqrt(2 * p_hat * (1 - p_hat) * ln(3K/delta) / m) + 3 * ln(3K/delta) / m
+
+    Args:
+        p_hat: Empirical violation rate.
+        m: Number of samples in the region.
+        delta: Global failure probability.
+        k: Number of regions (for union-bound correction).
+
+    Returns:
+        The confidence width (additive term for UCB).
+    """
+    if m <= 0:
+        return 1.0
+    log_term = math.log(3 * k / delta)
+    variance_term = math.sqrt(2 * p_hat * (1 - p_hat) * log_term / m)
+    remainder_term = 3 * log_term / m
+    return variance_term + remainder_term
+
+
+def compute_ucb_clopper_pearson(
+    n_violations: int, n_samples: int, delta: float, k: int = 1,
+) -> float:
+    """UCB using exact Clopper-Pearson bound instead of Hoeffding.
+
+    Tighter for small sample sizes. Recommended when K is large and
+    per-region samples are few.
+
+    Args:
+        n_violations: Number of violations observed.
+        n_samples: Number of samples in the region.
+        delta: Global failure probability.
+        k: Number of regions (for Bonferroni correction).
+
+    Returns:
+        The UCB estimate, clipped to [0, 1].
+    """
+    alpha = delta / (2 * k)  # Bonferroni correction
+    return clopper_pearson_upper(n_violations, n_samples, alpha)
+
+
+def check_acceptance_cp(
+    region_stats: list[RegionStats],
+    epsilon: float,
+    delta: float,
+) -> tuple[bool, float]:
+    """Acceptance rule using Clopper-Pearson bounds (tighter than Hoeffding).
+
+    Accept iff:  sum_j w_j * CP_UCB_j <= epsilon.
+
+    Args:
+        region_stats: Per-region statistics from the verifier.
+        epsilon: Target violation bound.
+        delta: Confidence parameter.
+
+    Returns:
+        (accepted, bound_value) where bound_value = sum_j w_j * CP_UCB_j.
+    """
+    k = len(region_stats)
+    if k == 0:
+        return True, 0.0
+
+    bound = 0.0
+    for rs in region_stats:
+        ucb = compute_ucb_clopper_pearson(rs.n_violations, rs.n_samples, delta, k)
+        bound += rs.weight * ucb
+    return bound <= epsilon, bound
+
+
 def clopper_pearson_upper(n_violations: int, n_samples: int, alpha: float) -> float:
     """Clopper-Pearson exact upper confidence bound for a binomial proportion.
 
@@ -169,4 +242,4 @@ def clopper_pearson_upper(n_violations: int, n_samples: int, alpha: float) -> fl
     if n_violations == n_samples:
         return 1.0
     from scipy.stats import beta as beta_dist
-    return beta_dist.ppf(1 - alpha, n_violations + 1, n_samples - n_violations)
+    return float(beta_dist.ppf(1 - alpha, n_violations + 1, n_samples - n_violations))

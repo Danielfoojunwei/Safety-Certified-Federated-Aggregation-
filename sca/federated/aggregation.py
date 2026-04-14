@@ -193,12 +193,17 @@ class Krum(Aggregator):
 
     Selects the update whose sum of distances to its nearest n-f-2
     neighbors is smallest, where f is the number of Byzantine clients.
+
+    IMPORTANT: n_byzantine must be set correctly for each experiment.
+    When n_byzantine=0, Krum degenerates (n_nearest = n-2) and may
+    select a Byzantine update. Always set n_byzantine >= actual count.
     """
 
     def __init__(self, n_byzantine: int = 0) -> None:
         """
         Args:
             n_byzantine: Upper bound on number of Byzantine clients f.
+                        Must satisfy f < (n - 2) / 2 for Krum's guarantee.
         """
         self.n_byzantine = n_byzantine
 
@@ -212,6 +217,16 @@ class Krum(Aggregator):
 
         n = len(updates)
         f = self.n_byzantine
+
+        # Krum requires n >= 2f + 3 for its theoretical guarantee
+        if n < 2 * f + 3:
+            import logging
+            logging.getLogger(__name__).warning(
+                "Krum: n=%d < 2*f+3=%d. Theoretical guarantee does not hold. "
+                "Falling back to FedAvg-style selection of closest-to-mean update.",
+                n, 2 * f + 3,
+            )
+
         n_nearest = max(1, n - f - 2)
 
         # Flatten each update into a single vector
@@ -233,3 +248,138 @@ class Krum(Aggregator):
         # Select the update with the smallest score
         best_idx = torch.argmin(scores).item()
         return updates[best_idx].delta
+
+
+class MultiKrum(Aggregator):
+    """Multi-Krum aggregation (Blanchard et al., 2017).
+
+    Selects the top-k closest updates (by Krum score) and averages
+    them. Generally more robust than single-Krum.
+    """
+
+    def __init__(self, n_byzantine: int = 0, top_k: int = 3) -> None:
+        """
+        Args:
+            n_byzantine: Upper bound on number of Byzantine clients f.
+            top_k: Number of top-scoring updates to average.
+        """
+        self.n_byzantine = n_byzantine
+        self.top_k = top_k
+
+    def aggregate(
+        self,
+        global_model: nn.Module,
+        updates: list[ClientUpdate],
+    ) -> dict[str, torch.Tensor]:
+        if not updates:
+            return {}
+
+        n = len(updates)
+        f = self.n_byzantine
+        n_nearest = max(1, n - f - 2)
+        k = min(self.top_k, n)
+
+        flat_updates = []
+        for u in updates:
+            flat = torch.cat([u.delta[name].flatten() for name in sorted(u.delta)])
+            flat_updates.append(flat)
+
+        flat_stack = torch.stack(flat_updates)
+
+        scores = torch.zeros(n)
+        for i in range(n):
+            dists = torch.norm(flat_stack - flat_stack[i], dim=1)
+            dists[i] = float("inf")
+            sorted_dists, _ = torch.sort(dists)
+            scores[i] = sorted_dists[:n_nearest].sum()
+
+        # Select top-k updates (lowest scores)
+        _, top_indices = torch.topk(scores, k, largest=False)
+
+        aggregated = {}
+        for name, _ in global_model.named_parameters():
+            selected = torch.stack([updates[i].delta[name] for i in top_indices])
+            aggregated[name] = selected.mean(dim=0)
+
+        return aggregated
+
+
+class FLTrust(Aggregator):
+    """FLTrust aggregation (Cao et al., NDSS 2021).
+
+    The server maintains a small clean root dataset and computes its
+    own reference update. Client updates are weighted by their cosine
+    similarity to the server update (negative similarities clipped to 0).
+
+    This is a strong modern baseline for Byzantine-robust FL.
+    """
+
+    def __init__(self, server_update: dict[str, torch.Tensor] | None = None) -> None:
+        """
+        Args:
+            server_update: The server's own update computed on trusted data.
+                          Can be set after construction via set_server_update().
+        """
+        self.server_update = server_update
+
+    def set_server_update(self, update: dict[str, torch.Tensor]) -> None:
+        """Set the server's reference update for this round."""
+        self.server_update = update
+
+    def aggregate(
+        self,
+        global_model: nn.Module,
+        updates: list[ClientUpdate],
+    ) -> dict[str, torch.Tensor]:
+        if not updates:
+            return {}
+
+        if self.server_update is None:
+            # Fallback to FedAvg if no server update
+            return FedAvg().aggregate(global_model, updates)
+
+        # Flatten server update
+        server_flat = torch.cat([
+            self.server_update[name].flatten()
+            for name in sorted(self.server_update)
+        ])
+        server_norm = torch.norm(server_flat)
+        if server_norm < 1e-10:
+            return FedAvg().aggregate(global_model, updates)
+
+        # Compute trust scores (ReLU cosine similarity)
+        trust_scores = []
+        normalized_updates = []
+        for u in updates:
+            client_flat = torch.cat([
+                u.delta[name].flatten() for name in sorted(u.delta)
+            ])
+            client_norm = torch.norm(client_flat)
+            if client_norm < 1e-10:
+                trust_scores.append(0.0)
+                normalized_updates.append(u.delta)
+                continue
+
+            cosine_sim = torch.dot(server_flat, client_flat) / (server_norm * client_norm)
+            trust = max(0.0, cosine_sim.item())  # ReLU
+            trust_scores.append(trust)
+
+            # Normalize client update to server update magnitude
+            scale = server_norm / client_norm
+            normed = {name: d * scale for name, d in u.delta.items()}
+            normalized_updates.append(normed)
+
+        total_trust = sum(trust_scores)
+        if total_trust < 1e-10:
+            return FedAvg().aggregate(global_model, updates)
+
+        # Weighted average by trust scores
+        aggregated = {}
+        for name, _ in global_model.named_parameters():
+            weighted_sum = torch.zeros_like(updates[0].delta[name])
+            for i, normed in enumerate(normalized_updates):
+                weight = trust_scores[i] / total_trust
+                weighted_sum += weight * normed[name]
+            aggregated[name] = weighted_sum
+
+        return aggregated

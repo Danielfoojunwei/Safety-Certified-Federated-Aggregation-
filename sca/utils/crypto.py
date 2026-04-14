@@ -71,9 +71,12 @@ class MerkleTree:
             h = hash_object(item)
             leaf_nodes.append(MerkleNode(hash_value=h, data=item))
 
-        # Pad to power of 2
+        # Pad to power of 2 with unique hashes to prevent collision attacks
+        pad_idx = 0
         while len(leaf_nodes) & (len(leaf_nodes) - 1):
-            leaf_nodes.append(MerkleNode(hash_value=sha256_hash(b"padding")))
+            pad_data = f"__merkle_pad_{pad_idx}_{len(leaf_nodes)}__".encode("utf-8")
+            leaf_nodes.append(MerkleNode(hash_value=sha256_hash(pad_data)))
+            pad_idx += 1
 
         # Build tree bottom-up
         level = leaf_nodes
@@ -112,8 +115,11 @@ class MerkleTree:
         while len(padded) & (len(padded) - 1):
             padded.append(None)
 
-        hashes = [hash_object(x) if x is not None else sha256_hash(b"padding")
-                   for x in padded]
+        hashes = [
+            hash_object(x) if x is not None
+            else sha256_hash(f"__merkle_pad_{i}_{len(padded)}__".encode("utf-8"))
+            for i, x in enumerate(padded)
+        ]
 
         proof = []
         idx = index
