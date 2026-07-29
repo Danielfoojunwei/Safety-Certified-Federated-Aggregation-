@@ -83,12 +83,25 @@ jobs:
           python -c "import sca.utils.seeding, sca.utils.paths, sca.utils.stats"
 
       - name: Package must not ship tests/ or results/
+        # This MUST run from outside the repo. Python puts the script's
+        # directory (here, the checkout root) at the front of sys.path, so
+        # running it in place resolves ./tests/__init__.py and reports a leak
+        # that does not exist -- it would be measuring the working directory,
+        # not the install. The `cd` is what makes the check test packaging.
         run: |
+          cd "$(mktemp -d)"
           python - <<'PY'
-          import importlib.util, sys
+          import importlib.util, sys, pathlib
+          # Guard the guard: if sca itself is not importable here, the check
+          # below is vacuous and would pass no matter what the install did.
+          spec = importlib.util.find_spec("sca")
+          if spec is None:
+              sys.exit("FAIL: sca is not importable outside the repo; this check would be vacuous")
+          print("sca resolved from", pathlib.Path(spec.origin).parent)
           for leaked in ("tests", "results"):
-              if importlib.util.find_spec(leaked) is not None:
-                  sys.exit(f"FAIL: '{leaked}' was installed as a top-level package")
+              found = importlib.util.find_spec(leaked)
+              if found is not None:
+                  sys.exit(f"FAIL: '{leaked}' was installed as a top-level package (origin: {found.origin})")
           print("ok: only sca is installed")
           PY
 
