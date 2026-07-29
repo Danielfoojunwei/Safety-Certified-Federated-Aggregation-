@@ -1,346 +1,492 @@
-"""Model Knowledge Graph (MKG) -- formal coverage structure.
+"""Model Knowledge Graph (MKG): a sparse adjacency structure over regions.
 
-Section 3.2: G = (V, E) where V = {1, ..., K} are interaction regions
-and edges encode adjacency or mutation lineage:
-    (j, l) in E iff dist(c_j, c_l) <= tau  or  R_l derived from R_j.
+G = (V, E) with V = {0..K-1} the interaction regions and
 
-The MKG serves as a coverage map and a frontier for recursive expansion
-by the RLM verifier.
+    (j, l) in E   iff   ||c_j - c_l|| <= tau   or   R_l was reached from R_j
+                                                    by a mutation during search.
+
+WHY tau IS NOW CALIBRATED AND GUARDED
+-------------------------------------
+The previous version shipped with ``tau=1.0`` hardcoded in every experiment
+driver.  On the embeddings those drivers produced, every pairwise centroid
+distance fell below 1.0, so the "graph" was the complete graph K_40: 780 edges
+on 40 nodes.  In a complete graph the r-hop neighbourhood of every node is the
+whole vertex set for every r >= 1, the frontier equals the unexplored set, and
+"graph-guided exploration" degenerates to "explore everything".  The
+budget-matched MKG-guided and blind arms were then bit-identical, and the
+reported gap came entirely from an unrelated constant.
+
+Two changes prevent that from recurring:
+
+1. ``tau=None`` (the default) triggers :meth:`auto_calibrate_tau`, which sets
+   tau to the ``target_density`` quantile of the pairwise centroid distances.
+2. :meth:`check_density` raises ``DegenerateGraphError`` when the realised edge
+   density leaves ``[min_density, max_density]``.  A near-complete graph and a
+   fully disconnected graph are both structurally meaningless, and the failure
+   must be loud.  Callers that would rather record the problem than crash pass
+   ``strict=False``; the flag then lands in :attr:`density_flag` and must be
+   propagated into the results file.
+
+REGRESSION SUBGRAPH
+-------------------
+:meth:`compute_regression_subgraph` ranks by the change in the POINT ESTIMATE
+p_hat, not by the change in the UCB.  Ranking by UCB difference -- what the old
+code did -- is dominated by the difference of Hoeffding widths, which is large
+and negative for any region the baseline barely sampled.  Concretely, a region
+the baseline sampled 3 times has ucb_old = 1.0, so delta_j = ucb_new - 1.0 <= 0
+and the region cannot be flagged no matter how badly it regressed.  Three
+regions that went from a 0.000 to a 1.000 violation rate were invisible to that
+rule.  Regions with too little evidence on either side are now reported as
+"insufficient evidence" rather than silently scoring <= 0.
 """
 
 from __future__ import annotations
 
+import logging
+import warnings
 from dataclasses import dataclass, field
-from typing import Any
 
 import networkx as nx
 import numpy as np
 
-from sca.knowledge_graph.regions import InteractionRegion, RegionPartition
-from sca.utils.stats import RegionStats
+from sca.knowledge_graph.regions import Region, RegionPartition
+from sca.utils.stats import RegionStat
+
+logger = logging.getLogger(__name__)
+
+
+class DegenerateGraphError(RuntimeError):
+    """Raised when the MKG is complete (or empty) and therefore uninformative."""
 
 
 @dataclass
 class MKGEdge:
-    """Edge metadata in the MKG.
+    """Edge metadata in the MKG."""
 
-    Attributes:
-        source: Source region index.
-        target: Target region index.
-        edge_type: Either "proximity" or "mutation" (lineage).
-        distance: Embedding-space distance between centroids.
-    """
     source: int
     target: int
     edge_type: str  # "proximity" | "mutation"
     distance: float = 0.0
 
 
+@dataclass(frozen=True)
+class RegressionReport:
+    """Result of a regression-subgraph computation (Section 5.3).
+
+    Attributes:
+        flagged: Region ids whose point-estimate violation rate rose by at
+            least ``eta`` and that had enough samples on BOTH sides.
+        deltas: ``{region_id: p_hat_new - p_hat_old}`` for eligible regions.
+        weighted_deltas: ``{region_id: w_j * max(0, delta_j)}``.
+        insufficient_evidence: ``{region_id: reason}``.  These regions were
+            NOT tested.  They are neither "clean" nor "regressed"; the run
+            simply cannot say.  Report this dict, do not drop it.
+        min_samples: The per-side sample floor that was applied.
+        eta: The flagging threshold.
+    """
+
+    flagged: list[int]
+    deltas: dict[int, float]
+    weighted_deltas: dict[int, float]
+    insufficient_evidence: dict[int, str]
+    min_samples: int
+    eta: float
+
+    def __contains__(self, region_id: object) -> bool:
+        return region_id in self.flagged
+
+    def __iter__(self):
+        return iter(self.flagged)
+
+    def __len__(self) -> int:
+        return len(self.flagged)
+
+
 class ModelKnowledgeGraph:
-    """Model Knowledge Graph (MKG) implementation.
+    """Sparse region-adjacency graph used to steer Stage-A search only.
 
-    Maintains a graph over interaction regions with:
-    - Proximity edges (centroid distance <= tau).
-    - Mutation edges (R_l derived from R_j via verifier recursion).
-    - Per-region violation statistics.
-    - Frontier tracking for adaptive sampling.
-
-    The graph is used for:
-    1. Coverage tracking (Section 3.2).
-    2. Graph-guided adaptive sampling (Section 5.2, Proposition 1).
-    3. Regression subgraph identification (Section 5.3).
+    The MKG never touches the certificate.  It decides where the search stage
+    spends its probes; the bound is computed from Stage-B i.i.d. draws whose
+    allocation the MKG may influence but whose validity it cannot affect
+    (Theorem 1 holds for ANY data-dependent m_j in [1, M]).
     """
 
     def __init__(
         self,
         partition: RegionPartition,
-        tau: float = 1.5,
+        tau: float | None = None,
+        target_density: float = 0.15,
+        min_density: float = 0.01,
+        max_density: float = 0.50,
+        strict: bool = True,
     ) -> None:
         """
         Args:
-            partition: The interaction region partition.
-            tau: Distance threshold for proximity edges.
+            partition: A fitted :class:`RegionPartition`.
+            tau: Proximity threshold.  ``None`` (recommended) calibrates it to
+                ``target_density``.  An explicit value is honoured but still
+                density-checked.
+            target_density: Fraction of node pairs to connect when calibrating.
+            min_density / max_density: Acceptable band for the realised density.
+            strict: Raise :class:`DegenerateGraphError` outside the band.  When
+                False, warn and set :attr:`density_flag` instead.
         """
         self.partition = partition
-        self.tau = tau
+        self.target_density = float(target_density)
+        self.min_density = float(min_density)
+        self.max_density = float(max_density)
+        self.strict = bool(strict)
+        self.density_flag: str | None = None
+        self.tau_was_calibrated = tau is None
         self.graph = nx.Graph()
-        self._build_graph()
+
+        if tau is None:
+            self.tau = float("nan")
+            self.auto_calibrate_tau(self.target_density)
+        else:
+            self.tau = float(tau)
+            self._build_graph()
+        self.check_density()
+
+    # ------------------------------------------------------------------
+    # Construction
+    # ------------------------------------------------------------------
+    def _pairwise_centroid_distances(self) -> np.ndarray:
+        regions = self.partition.regions
+        if len(regions) < 2:
+            return np.zeros(0)
+        c = np.stack([r.centroid for r in regions])
+        d2 = (
+            (c ** 2).sum(1)[:, None]
+            - 2.0 * c @ c.T
+            + (c ** 2).sum(1)[None, :]
+        )
+        np.maximum(d2, 0.0, out=d2)
+        d = np.sqrt(d2)
+        iu = np.triu_indices(len(regions), k=1)
+        return d[iu]
 
     def _build_graph(self) -> None:
-        """Build the MKG from current regions."""
         self.graph.clear()
-
-        # Add nodes
-        for region in self.partition.regions:
+        regions = self.partition.regions
+        for region in regions:
             self.graph.add_node(
                 region.region_id,
                 centroid=region.centroid,
                 weight=region.weight,
             )
-
-        # Add proximity edges
-        regions = self.partition.regions
-        for i in range(len(regions)):
-            for j in range(i + 1, len(regions)):
-                dist = float(np.linalg.norm(
-                    regions[i].centroid - regions[j].centroid
-                ))
-                if dist <= self.tau:
+        n = len(regions)
+        if n < 2:
+            return
+        c = np.stack([r.centroid for r in regions])
+        d2 = (
+            (c ** 2).sum(1)[:, None] - 2.0 * c @ c.T + (c ** 2).sum(1)[None, :]
+        )
+        np.maximum(d2, 0.0, out=d2)
+        d = np.sqrt(d2)
+        for i in range(n):
+            for j in range(i + 1, n):
+                if d[i, j] <= self.tau:
                     self.graph.add_edge(
                         regions[i].region_id,
                         regions[j].region_id,
                         edge_type="proximity",
-                        distance=dist,
+                        distance=float(d[i, j]),
                     )
 
-    def add_mutation_edge(self, source_id: int, target_id: int) -> None:
-        """Record a mutation lineage edge (R_target derived from R_source).
+    def auto_calibrate_tau(self, target_density: float | None = None) -> float:
+        """Set tau to the ``target_density`` quantile of pairwise distances.
 
-        Args:
-            source_id: Source region index.
-            target_id: Target region index.
+        This is the call the old code defined and then never made, which is how
+        the complete graph shipped.  It is now invoked from ``__init__``
+        whenever ``tau`` is not given explicitly.
         """
-        if not self.graph.has_node(source_id):
-            self.graph.add_node(source_id)
-        if not self.graph.has_node(target_id):
-            self.graph.add_node(target_id)
+        if target_density is not None:
+            self.target_density = float(target_density)
+        dists = self._pairwise_centroid_distances()
+        if dists.size == 0:
+            self.tau = 0.0
+            self._build_graph()
+            return self.tau
+        # Nudge just below the quantile so ties at the quantile do not blow the
+        # density past the target on degenerate (many-equal-distance) inputs.
+        q = float(np.quantile(dists, self.target_density))
+        self.tau = q
+        self._build_graph()
+        if self.get_edge_density() > self.max_density:
+            # Ties pushed us over: fall back to the largest distance that keeps
+            # density within budget.
+            ordered = np.sort(dists)
+            budget = int(self.max_density * len(ordered))
+            budget = max(1, min(budget, len(ordered)))
+            self.tau = float(np.nextafter(ordered[budget - 1], -np.inf))
+            self._build_graph()
+        return self.tau
 
+    def check_density(self) -> float:
+        """Validate the realised edge density; raise or flag if degenerate."""
+        density = self.get_edge_density()
+        n = self.graph.number_of_nodes()
+        if n < 3:
+            return density
+        problem = None
+        if density > self.max_density:
+            problem = (
+                f"MKG edge density {density:.3f} exceeds max_density "
+                f"{self.max_density:.3f} on K={n} regions "
+                f"({self.graph.number_of_edges()} of {n * (n - 1) // 2} pairs). "
+                "A near-complete graph makes every r-hop neighbourhood the whole "
+                "vertex set, so graph-guided search is indistinguishable from "
+                "blind search."
+            )
+        elif density < self.min_density:
+            problem = (
+                f"MKG edge density {density:.3f} is below min_density "
+                f"{self.min_density:.3f} on K={n} regions. An edgeless graph "
+                "has an empty frontier, so graph-guided search never moves."
+            )
+        if problem is not None:
+            self.density_flag = problem
+            if self.strict:
+                raise DegenerateGraphError(problem)
+            warnings.warn(problem, RuntimeWarning, stacklevel=2)
+        return density
+
+    def get_edge_density(self) -> float:
+        n = self.graph.number_of_nodes()
+        if n < 2:
+            return 0.0
+        return self.graph.number_of_edges() / (n * (n - 1) / 2)
+
+    def add_mutation_edge(self, source_id: int, target_id: int) -> None:
+        """Record that a mutation carried a probe from R_source into R_target."""
+        if source_id == target_id:
+            return
+        for rid in (source_id, target_id):
+            if not self.graph.has_node(rid):
+                self.graph.add_node(rid)
         dist = 0.0
-        src_region = self._get_region(source_id)
-        tgt_region = self._get_region(target_id)
-        if src_region is not None and tgt_region is not None:
-            dist = float(np.linalg.norm(
-                src_region.centroid - tgt_region.centroid
-            ))
-
+        src, tgt = self._get_region(source_id), self._get_region(target_id)
+        if src is not None and tgt is not None:
+            dist = float(np.linalg.norm(src.centroid - tgt.centroid))
+        if self.graph.has_edge(source_id, target_id):
+            return  # keep the proximity label; the edge already exists
         self.graph.add_edge(
-            source_id, target_id,
-            edge_type="mutation",
-            distance=dist,
+            source_id, target_id, edge_type="mutation", distance=dist
         )
 
-    def _get_region(self, region_id: int) -> InteractionRegion | None:
-        """Lookup a region by ID."""
+    def _get_region(self, region_id: int) -> Region | None:
         for r in self.partition.regions:
             if r.region_id == region_id:
                 return r
         return None
 
+    # ------------------------------------------------------------------
+    # Search guidance
+    # ------------------------------------------------------------------
     def get_neighborhood(self, region_id: int, hops: int = 1) -> set[int]:
-        """Return the r-hop neighborhood N_r of a region in the MKG.
-
-        Used for graph-guided adaptive sampling (Section 5.2):
-        after the first hit in a bad region, sample within the
-        r-hop neighborhood to concentrate testing on the failure cluster.
-
-        Args:
-            region_id: Center region index.
-            hops: Radius of the neighborhood.
-
-        Returns:
-            Set of region IDs within r hops.
-        """
+        """r-hop neighbourhood N_r(j), inclusive of j."""
         if region_id not in self.graph:
             return {region_id}
-
         visited = {region_id}
         frontier = {region_id}
-        for _ in range(hops):
-            next_frontier = set()
+        for _ in range(max(0, hops)):
+            nxt = set()
             for node in frontier:
-                for neighbor in self.graph.neighbors(node):
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        next_frontier.add(neighbor)
-            frontier = next_frontier
+                for nb in self.graph.neighbors(node):
+                    if nb not in visited:
+                        visited.add(nb)
+                        nxt.add(nb)
+            frontier = nxt
+            if not frontier:
+                break
         return visited
 
     def get_frontier_regions(self, explored: set[int]) -> set[int]:
-        """Return unexplored regions adjacent to explored ones.
-
-        The frontier guides where the RLM verifier should probe next.
-
-        Args:
-            explored: Set of already-explored region IDs.
-
-        Returns:
-            Set of unexplored region IDs adjacent to explored regions.
-        """
+        """Unexplored regions adjacent to an explored one."""
         frontier = set()
         for node in explored:
             if node in self.graph:
-                for neighbor in self.graph.neighbors(node):
-                    if neighbor not in explored:
-                        frontier.add(neighbor)
+                for nb in self.graph.neighbors(node):
+                    if nb not in explored:
+                        frontier.add(nb)
         return frontier
 
-    def get_region_stats(self, delta: float) -> list[RegionStats]:
-        """Collect per-region statistics for the acceptance rule.
+    def get_focus_regions(
+        self, failure_regions: set[int], hops: int
+    ) -> set[int]:
+        """Union of the r-hop neighbourhoods of the failure regions.
 
-        Args:
-            delta: Confidence parameter.
-
-        Returns:
-            List of RegionStats for all regions.
+        On a properly sparse graph this is a strict subset of V and it GROWS
+        with ``hops``; on the old complete graph it was V for every hops >= 1,
+        which is why the old ``neighborhood_hops`` parameter had no effect.
         """
-        stats = []
-        for region in self.partition.regions:
-            stats.append(RegionStats(
-                region_id=region.region_id,
-                n_samples=region.n_samples,
-                n_violations=region.n_violations,
-                weight=region.weight,
-            ))
-        return stats
+        focus: set[int] = set()
+        for j in failure_regions:
+            focus |= self.get_neighborhood(j, hops)
+        return focus
 
+    # ------------------------------------------------------------------
+    # Stats extraction
+    # ------------------------------------------------------------------
+    def get_estimation_stats(self) -> list[RegionStat]:
+        """Per-region Stage-B statistics.  The ONLY input to the certificate."""
+        return [
+            RegionStat(
+                region_id=r.region_id,
+                weight=float(r.weight),
+                n_samples=int(r.n_estimation_samples),
+                n_violations=int(r.n_estimation_violations),
+            )
+            for r in self.partition.regions
+        ]
+
+    def get_search_stats(self) -> list[RegionStat]:
+        """Per-region Stage-A statistics.  Discovery metrics; never certified."""
+        return [
+            RegionStat(
+                region_id=r.region_id,
+                weight=float(r.weight),
+                n_samples=int(r.n_search_samples),
+                n_violations=int(r.n_search_violations),
+            )
+            for r in self.partition.regions
+        ]
+
+    # ------------------------------------------------------------------
+    # Regression analysis (Section 5.3)
+    # ------------------------------------------------------------------
     def compute_regression_subgraph(
         self,
-        prev_stats: list[RegionStats],
-        curr_stats: list[RegionStats],
-        delta: float,
-        eta: float = 0.01,
-    ) -> list[int]:
-        """Identify the regression subgraph Delta_G (Section 5.3).
-
-        Delta_G = {j : Delta_j >= eta} where
-        Delta_j = UCB_j(M_new) - UCB_j(M_old).
+        prev_stats: list[RegionStat],
+        curr_stats: list[RegionStat],
+        eta: float = 0.05,
+        min_samples: int = 5,
+    ) -> RegressionReport:
+        """Regions whose violation POINT ESTIMATE rose by at least ``eta``.
 
         Args:
-            prev_stats: Region stats from the previous model.
-            curr_stats: Region stats from the candidate model.
-            delta: Confidence parameter.
-            eta: Threshold for regression detection.
+            prev_stats: Baseline model's per-region estimation stats.
+            curr_stats: Candidate model's per-region estimation stats.
+            eta: Minimum increase in p_hat to flag.
+            min_samples: Required sample count on BOTH sides.  A region below
+                this on either side is reported under
+                ``insufficient_evidence`` and is not flagged -- it is explicitly
+                untested, which is different from tested-and-clean.
 
         Returns:
-            List of region IDs in the regression subgraph.
+            A :class:`RegressionReport`.  It supports ``in``, ``iter`` and
+            ``len`` over the flagged ids so it can stand in for the old
+            ``list[int]`` return at the call sites that only needed membership.
         """
-        k = max(len(prev_stats), len(curr_stats))
-        if k == 0:
-            return []
-
         prev_map = {rs.region_id: rs for rs in prev_stats}
-        regression_regions = []
+        curr_map = {rs.region_id: rs for rs in curr_stats}
 
-        for rs_new in curr_stats:
-            rs_old = prev_map.get(rs_new.region_id)
-            ucb_new = rs_new.ucb(delta, k)
-            ucb_old = rs_old.ucb(delta, k) if rs_old else 0.0
-            delta_j = ucb_new - ucb_old
+        flagged: list[int] = []
+        deltas: dict[int, float] = {}
+        weighted: dict[int, float] = {}
+        insufficient: dict[int, str] = {}
+
+        for rid in sorted(set(prev_map) | set(curr_map)):
+            rs_old = prev_map.get(rid)
+            rs_new = curr_map.get(rid)
+            if rs_new is None:
+                insufficient[rid] = "absent from candidate stats"
+                continue
+            if rs_old is None:
+                insufficient[rid] = "absent from baseline stats"
+                continue
+            if rs_old.n_samples < min_samples and rs_new.n_samples < min_samples:
+                insufficient[rid] = (
+                    f"n_baseline={rs_old.n_samples} and "
+                    f"n_candidate={rs_new.n_samples} both < min_samples={min_samples}"
+                )
+                continue
+            if rs_old.n_samples < min_samples:
+                insufficient[rid] = (
+                    f"n_baseline={rs_old.n_samples} < min_samples={min_samples}"
+                )
+                continue
+            if rs_new.n_samples < min_samples:
+                insufficient[rid] = (
+                    f"n_candidate={rs_new.n_samples} < min_samples={min_samples}"
+                )
+                continue
+
+            p_old = rs_old.n_violations / rs_old.n_samples
+            p_new = rs_new.n_violations / rs_new.n_samples
+            delta_j = p_new - p_old
+            deltas[rid] = delta_j
+            weighted[rid] = rs_new.weight * max(0.0, delta_j)
             if delta_j >= eta:
-                regression_regions.append(rs_new.region_id)
+                flagged.append(rid)
 
-        return regression_regions
+        # Rank by weighted severity, most severe first.
+        flagged.sort(key=lambda r: (-weighted[r], -deltas[r], r))
+        return RegressionReport(
+            flagged=flagged,
+            deltas=deltas,
+            weighted_deltas=weighted,
+            insufficient_evidence=insufficient,
+            min_samples=int(min_samples),
+            eta=float(eta),
+        )
 
     def minimal_explanation_set(
         self,
-        prev_stats: list[RegionStats],
-        curr_stats: list[RegionStats],
-        delta: float,
+        prev_stats: list[RegionStat],
+        curr_stats: list[RegionStat],
         gamma: float = 0.05,
+        min_samples: int = 5,
+        eta: float = 0.0,
     ) -> list[int]:
-        """Compute a minimal regression explanation set (Section 5.3).
+        """Smallest set S with sum_{j in S} w_j * (p_hat_new - p_hat_old)_+ >= gamma.
 
-        Solve: min |S| s.t. sum_{j in S} w_j * Delta_j >= gamma.
-        Greedy solution (nonneg weights make greedy optimal for coverage).
+        Greedy is optimal here: the objective is a sum of nonnegative constants
+        over the chosen set, so taking the largest terms first is exact.
 
-        Args:
-            prev_stats: Region stats from the previous model.
-            curr_stats: Region stats from the candidate model.
-            delta: Confidence parameter.
-            gamma: Minimum weighted delta to explain.
-
-        Returns:
-            Sorted list of region IDs forming the minimal explanation set.
+        Returns the ids sorted ascending.  Returns the greedily-chosen prefix
+        even if the total never reaches ``gamma`` (the caller can compare the
+        achieved mass against gamma via
+        :meth:`compute_regression_subgraph`).
         """
-        k = max(len(prev_stats), len(curr_stats))
-        if k == 0:
-            return []
-
-        prev_map = {rs.region_id: rs for rs in prev_stats}
-
-        # Compute weighted deltas
-        deltas = []
-        for rs_new in curr_stats:
-            rs_old = prev_map.get(rs_new.region_id)
-            ucb_new = rs_new.ucb(delta, k)
-            ucb_old = rs_old.ucb(delta, k) if rs_old else 0.0
-            delta_j = ucb_new - ucb_old
-            if delta_j > 0:
-                deltas.append((rs_new.region_id, rs_new.weight * delta_j))
-
-        # Greedy: sort by weighted delta descending
-        deltas.sort(key=lambda x: -x[1])
-
-        result = []
+        report = self.compute_regression_subgraph(
+            prev_stats, curr_stats, eta=eta, min_samples=min_samples
+        )
+        ranked = sorted(
+            (r for r in report.weighted_deltas if report.weighted_deltas[r] > 0),
+            key=lambda r: -report.weighted_deltas[r],
+        )
+        chosen: list[int] = []
         total = 0.0
-        for region_id, w_delta in deltas:
-            result.append(region_id)
-            total += w_delta
+        for rid in ranked:
+            chosen.append(rid)
+            total += report.weighted_deltas[rid]
             if total >= gamma:
                 break
+        return sorted(chosen)
 
-        return sorted(result)
-
-    def auto_calibrate_tau(self, target_density: float = 0.3) -> float:
-        """Calibrate tau so the proximity graph has approximately target_density.
-
-        Addresses the problem where a hardcoded tau=1.0 can produce a
-        100%-connected graph (meaningless structure). Sets tau to the
-        quantile of pairwise centroid distances corresponding to the
-        target edge density.
-
-        Args:
-            target_density: Target fraction of possible edges to include.
-                           0.3 means ~30% of node pairs will be connected.
-
-        Returns:
-            The calibrated tau value.
-        """
-        regions = self.partition.regions
-        n = len(regions)
-        if n < 2:
-            return self.tau
-
-        # Compute all pairwise centroid distances
-        dists = []
-        for i in range(n):
-            for j in range(i + 1, n):
-                d = float(np.linalg.norm(
-                    regions[i].centroid - regions[j].centroid
-                ))
-                dists.append(d)
-
-        if not dists:
-            return self.tau
-
-        # Set tau to the quantile matching the target density
-        self.tau = float(np.quantile(dists, target_density))
-        self._build_graph()
-        return self.tau
-
-    def get_edge_density(self) -> float:
-        """Return the fraction of possible edges that exist in the graph."""
-        n = self.graph.number_of_nodes()
-        if n < 2:
-            return 0.0
-        max_edges = n * (n - 1) / 2
-        return self.graph.number_of_edges() / max_edges
-
-    def refresh_edges(self) -> None:
-        """Rebuild proximity edges (call after adding new regions)."""
-        self._build_graph()
-
+    # ------------------------------------------------------------------
     def summary(self) -> dict:
-        """Return a summary of the MKG state."""
+        n = self.graph.number_of_nodes()
         return {
             "n_regions": self.partition.k,
+            "n_nodes": n,
             "n_edges": self.graph.number_of_edges(),
+            "max_possible_edges": n * (n - 1) // 2,
+            "edge_density": self.get_edge_density(),
+            "tau": self.tau,
+            "tau_was_calibrated": self.tau_was_calibrated,
+            "target_density": self.target_density,
+            "density_flag": self.density_flag,
             "n_proximity_edges": sum(
-                1 for _, _, d in self.graph.edges(data=True)
+                1
+                for _, _, d in self.graph.edges(data=True)
                 if d.get("edge_type") == "proximity"
             ),
             "n_mutation_edges": sum(
-                1 for _, _, d in self.graph.edges(data=True)
+                1
+                for _, _, d in self.graph.edges(data=True)
                 if d.get("edge_type") == "mutation"
             ),
         }

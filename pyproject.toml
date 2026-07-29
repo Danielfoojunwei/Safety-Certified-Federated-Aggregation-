@@ -1,39 +1,116 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+# >=77 is required for the PEP 639 `license = "MIT"` / `license-files` form
+# used below. Older setuptools rejects the string form of `license`.
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "sca"
-version = "0.2.0"
-description = "Safety-Certified Federated Aggregation via Recursive Adaptive Verification and Knowledge-Graph Coverage"
+version = "0.3.0"
+description = "Safety-Certified Federated Aggregation: anytime-valid region-stratified certificates with search/estimation separation"
 readme = "README.md"
-requires-python = ">=3.9"
-license = {text = "MIT"}
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "SCA contributors" }]
+keywords = [
+    "federated-learning",
+    "safety-verification",
+    "concentration-inequalities",
+    "byzantine-robustness",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Pins reflect what is ACTUALLY installed and exercised in CI, not aspiration.
+# The previous file pinned "numpy>=1.21,<2.0" while the environment ran numpy
+# 2.4.6, so `pip install -e .` would have downgraded numpy out from under torch.
 dependencies = [
-    "numpy>=1.21,<2.0",
-    "torch>=2.0,<3.0",
-    "scikit-learn>=1.0,<2.0",
-    "networkx>=2.6,<4.0",
-    "scipy>=1.7",
+    "numpy>=1.26,<3",
+    "torch>=2.2,<3",
+    "scikit-learn>=1.3,<2",
+    "networkx>=3.0,<4",
+    "scipy>=1.10,<2",
+    # Real-data path (PKU-SafeRLHF) and tokenisation.  Imported lazily inside
+    # sca/experiments/data.py, but the experiments are the deliverable of this
+    # repository and do not run without them, so they are core, not optional.
+    "datasets>=2.18",
+    "transformers>=4.40",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "coverage[toml]>=7.4",
 ]
-llm = [
-    "anthropic>=0.30",
-    "openai>=1.0",
-]
-embeddings = [
-    "sentence-transformers>=2.2",
-]
-full = [
-    "sca[llm,embeddings]",
-    "transformers>=4.30",
-    "datasets>=2.14",
-]
+# Optional real-LLM backend for the mutation operators.  Everything in the
+# paper runs without it; sca/verifier/mutations.py imports it lazily.
+llm = ["anthropic>=0.30"]
+embeddings = ["sentence-transformers>=2.2"]
+full = ["sca[dev,llm,embeddings]"]
+
+[project.urls]
+Repository = "https://github.com/danielfoo/Safety-Certified-Federated-Aggregation-via-Recursive-Language-Model-Verification-and-Knowledge-Graph"
+
+# ---------------------------------------------------------------------------
+# Packaging.
+#
+# The previous configuration declared no package discovery at all.  With a
+# flat layout, modern setuptools (>=61) refuses to guess when sibling
+# directories such as results/ and tests/ are present, and `pip install -e .`
+# fails with "Multiple top-level packages discovered".  Discovery is now
+# explicit: ship the sca package and nothing else.
+# ---------------------------------------------------------------------------
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sca*"]
+exclude = ["tests*", "results*", "scripts*", "docs*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# -ra surfaces skip/xfail reasons, which is how a silently-skipped soundness
+# test would otherwise hide.  --strict-markers makes a typo'd marker an error
+# rather than a silently-unfiltered test.
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "slow: full-size runs (minutes). Deselect with -m 'not slow'.",
+    "montecarlo: Monte Carlo coverage checks for the Theorem 1 bound (slow, seeded).",
+    "network: requires the HuggingFace Hub. Deselect with -m 'not network'.",
+    "subprocess: spawns child interpreters to test cross-process reproducibility.",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:torch.*",
+    "ignore::UserWarning:torch.*",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["sca"]
+parallel = true
+omit = [
+    # Nothing. The six legacy pre-rebuild entry points that used to be listed
+    # here (run_neurips_exp{1,2,3}, run_real_evaluation, run_novelty_validation,
+    # run_experiment) have been DELETED, and sca/experiments/evaluation.py was
+    # rebuilt and is covered by tests/test_evaluation.py. An omit list is how a
+    # result-producing module escapes the F13 check, so this one stays empty.
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+[tool.coverage.paths]
+source = ["sca", "*/site-packages/sca"]

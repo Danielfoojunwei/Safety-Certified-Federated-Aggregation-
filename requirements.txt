@@ -1,5 +1,11 @@
-numpy>=1.21
-torch>=2.0
-scikit-learn>=1.0
-networkx>=2.6
-pytest>=7.0
+# Dependencies live in pyproject.toml -- this file only forwards to it.
+#
+# It previously carried a hand-maintained second copy of the dependency list
+# that had drifted out of sync with pyproject.toml (it pinned "numpy>=1.21",
+# listed pytest as a runtime dependency, and omitted scipy, datasets, and
+# transformers entirely). Two sources of truth for pins is how an environment
+# ends up different from the one the results were produced in.
+#
+#   pip install -r requirements.txt
+#
+-e .[dev]

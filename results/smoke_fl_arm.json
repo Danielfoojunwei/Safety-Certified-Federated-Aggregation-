@@ -1,0 +1,2523 @@
+{
+  "provenance": {
+    "generated_by": "python -m sca.experiments.run_all",
+    "generated_at_utc": "2026-07-29T07:08:26Z",
+    "deterministic_mode": false,
+    "git": {
+      "commit": "b55d568b0c8cd5e4ad348763b35bbc2a2bc361e9",
+      "branch": "claude/github-repo-ultracode-analysis-82w3sy",
+      "dirty": true
+    },
+    "versions": {
+      "python": "3.11.15",
+      "platform": "Linux-6.18.5-x86_64-with-glibc2.39",
+      "numpy": "2.4.6",
+      "torch": "2.13.0+cpu",
+      "sklearn": "1.9.0",
+      "scipy": "1.17.1",
+      "networkx": "3.6.1",
+      "datasets": "5.0.1",
+      "transformers": "5.14.1"
+    },
+    "config": {
+      "n_corpus": 400,
+      "n_clients": 2,
+      "dirichlet_alpha": 0.5,
+      "max_len": 128,
+      "one_response_per_prompt": true,
+      "k_total": 4,
+      "budget_cap": 40,
+      "epsilon": 0.6,
+      "delta": 0.05,
+      "search_budget": 30,
+      "estimation_budget": 80,
+      "max_depth": 2,
+      "branching_factor": 2,
+      "neighborhood_hops": 2,
+      "embedder": "hashed",
+      "n_rounds": 2,
+      "lr": 5.0,
+      "local_epochs": 5,
+      "batch_size": 32,
+      "pretrain_epochs": 2,
+      "pretrain_lr": 0.1,
+      "model_kind": "bow",
+      "seeds": [
+        0,
+        1
+      ],
+      "aggregators": [
+        "fedavg",
+        "median"
+      ],
+      "attacks": [
+        "sign_flip",
+        "legacy_gaussian"
+      ],
+      "n_byzantine": 1,
+      "smoke": true
+    },
+    "arm": "fl"
+  },
+  "per_seed": {
+    "0": {
+      "C1": {
+        "criterion": "C1",
+        "statement": "clean FedAvg (0 attackers, no gate) > frozen pretrained on held-out test data",
+        "clean_fedavg": 0.4625,
+        "frozen_pretrained": 0.5625,
+        "delta": -0.09999999999999998,
+        "passed": false
+      },
+      "identity_always_accept_equals_no_gate": true,
+      "identity_always_reject_equals_frozen": true,
+      "split_overlaps": {
+        "pairwise_overlaps": {
+          "client_0|client_1": 0,
+          "client_0|server_search": 0,
+          "client_0|server_estimation": 0,
+          "client_0|heldout_test": 0,
+          "client_1|server_search": 0,
+          "client_1|server_estimation": 0,
+          "client_1|heldout_test": 0,
+          "server_search|server_estimation": 0,
+          "server_search|heldout_test": 0,
+          "server_estimation|heldout_test": 0
+        },
+        "max_pairwise_overlap": 0,
+        "n_leaf_splits": 5,
+        "total_ids_across_splits": 400,
+        "n_distinct_ids": 400,
+        "duplicated_ids": 0,
+        "corpus_size": 400,
+        "verification_pool_is_union_of_search_and_estimation": true
+      },
+      "group_overlaps": {
+        "grouped_by_prompt": true,
+        "pairwise_group_overlaps": {
+          "client_0|server_search": 0,
+          "client_0|server_estimation": 0,
+          "client_0|heldout_test": 0,
+          "client_1|server_search": 0,
+          "client_1|server_estimation": 0,
+          "client_1|heldout_test": 0,
+          "server_search|server_estimation": 0,
+          "server_search|heldout_test": 0,
+          "server_estimation|heldout_test": 0
+        },
+        "max_group_overlap": 0
+      },
+      "client_sizes": [
+        203,
+        37
+      ],
+      "client_class_counts": [
+        {
+          "0": 109,
+          "1": 94
+        },
+        {
+          "0": 1,
+          "1": 36
+        }
+      ],
+      "parameters": {
+        "total": 100516,
+        "trainable": 100516,
+        "frozen": 0,
+        "buffers": 0
+      }
+    },
+    "1": {
+      "C1": {
+        "criterion": "C1",
+        "statement": "clean FedAvg (0 attackers, no gate) > frozen pretrained on held-out test data",
+        "clean_fedavg": 0.5375,
+        "frozen_pretrained": 0.525,
+        "delta": 0.012499999999999956,
+        "passed": true
+      },
+      "identity_always_accept_equals_no_gate": true,
+      "identity_always_reject_equals_frozen": true,
+      "split_overlaps": {
+        "pairwise_overlaps": {
+          "client_0|client_1": 0,
+          "client_0|server_search": 0,
+          "client_0|server_estimation": 0,
+          "client_0|heldout_test": 0,
+          "client_1|server_search": 0,
+          "client_1|server_estimation": 0,
+          "client_1|heldout_test": 0,
+          "server_search|server_estimation": 0,
+          "server_search|heldout_test": 0,
+          "server_estimation|heldout_test": 0
+        },
+        "max_pairwise_overlap": 0,
+        "n_leaf_splits": 5,
+        "total_ids_across_splits": 400,
+        "n_distinct_ids": 400,
+        "duplicated_ids": 0,
+        "corpus_size": 400,
+        "verification_pool_is_union_of_search_and_estimation": true
+      },
+      "group_overlaps": {
+        "grouped_by_prompt": true,
+        "pairwise_group_overlaps": {
+          "client_0|server_search": 0,
+          "client_0|server_estimation": 0,
+          "client_0|heldout_test": 0,
+          "client_1|server_search": 0,
+          "client_1|server_estimation": 0,
+          "client_1|heldout_test": 0,
+          "server_search|server_estimation": 0,
+          "server_search|heldout_test": 0,
+          "server_estimation|heldout_test": 0
+        },
+        "max_group_overlap": 0
+      },
+      "client_sizes": [
+        116,
+        124
+      ],
+      "client_class_counts": [
+        {
+          "0": 11,
+          "1": 105
+        },
+        {
+          "0": 94,
+          "1": 30
+        }
+      ],
+      "parameters": {
+        "total": 100516,
+        "trainable": 100516,
+        "frozen": 0,
+        "buffers": 0
+      }
+    }
+  },
+  "rows": [
+    {
+      "arm": "frozen_pretrained",
+      "seed": 0,
+      "final_accuracy": 0.5625,
+      "final_loss": 0.6900999069213867,
+      "predicted_class_fraction": {
+        "0": 0.025,
+        "1": 0.975
+      },
+      "final_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 0,
+      "rounds_rejected": 0,
+      "n_rounds": 0,
+      "aggregator": "none",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": null,
+      "gate_bounds": [],
+      "gate_info": []
+    },
+    {
+      "arm": "clean_fedavg_no_gate",
+      "seed": 0,
+      "final_accuracy": 0.4625,
+      "final_loss": 0.7796558856964111,
+      "predicted_class_fraction": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "final_hash": "ef098fc4d4ca830652c223a5f0f2af41",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ]
+    },
+    {
+      "arm": "no_gate",
+      "seed": 0,
+      "final_accuracy": 0.4625,
+      "final_loss": 1.0007719039916991,
+      "predicted_class_fraction": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "final_hash": "7bd6828b63e5af69b94488f9a0c88e3c",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.18075775008735023,
+        "mean_cosine_attacker_vs_benign": 0.18075775008735023,
+        "attacker_norm_mean": 2.169668296698422,
+        "benign_norm_mean": 2.9493862396150115,
+        "benign_norm_min": 2.9493862396150115,
+        "benign_norm_max": 2.9493862396150115,
+        "norm_ratio": 0.7273040639625723,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ]
+    },
+    {
+      "arm": "always_accept_gate",
+      "seed": 0,
+      "final_accuracy": 0.4625,
+      "final_loss": 1.0007719039916991,
+      "predicted_class_fraction": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "final_hash": "7bd6828b63e5af69b94488f9a0c88e3c",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "always_accept",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.18075775008735023,
+        "mean_cosine_attacker_vs_benign": 0.18075775008735023,
+        "attacker_norm_mean": 2.169668296698422,
+        "benign_norm_mean": 2.9493862396150115,
+        "benign_norm_min": 2.9493862396150115,
+        "benign_norm_max": 2.9493862396150115,
+        "norm_ratio": 0.7273040639625723,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "control": "always_accept"
+        },
+        {
+          "control": "always_accept"
+        }
+      ]
+    },
+    {
+      "arm": "always_reject_gate",
+      "seed": 0,
+      "final_accuracy": 0.5625,
+      "final_loss": 0.6900999069213867,
+      "predicted_class_fraction": {
+        "0": 0.025,
+        "1": 0.975
+      },
+      "final_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 0,
+      "rounds_rejected": 2,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "always_reject",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.06923832316306441,
+        "mean_cosine_attacker_vs_benign": -0.06923832316306441,
+        "attacker_norm_mean": 2.7504467960115795,
+        "benign_norm_mean": 3.1129340743499636,
+        "benign_norm_min": 3.1129340743499636,
+        "benign_norm_max": 3.1129340743499636,
+        "norm_ratio": 0.8925699323178287,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "control": "always_reject"
+        },
+        {
+          "control": "always_reject"
+        }
+      ]
+    },
+    {
+      "arm": "clean_fedavg_no_attack_no_gate",
+      "seed": 0,
+      "final_accuracy": 0.4625,
+      "final_loss": 0.7796558856964111,
+      "predicted_class_fraction": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "final_hash": "ef098fc4d4ca830652c223a5f0f2af41",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": null,
+      "aggregator_name": "fedavg",
+      "n_byzantine": 0
+    },
+    {
+      "arm": "clean_median_no_attack_no_gate",
+      "seed": 0,
+      "final_accuracy": 0.575,
+      "final_loss": 0.7350644588470459,
+      "predicted_class_fraction": {
+        "0": 0.0875,
+        "1": 0.9125
+      },
+      "final_hash": "4bd4bf868ec23a52331199718fdc5dbd",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": true,
+        "detail": "f=0, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": null,
+      "aggregator_name": "median",
+      "n_byzantine": 0
+    },
+    {
+      "arm": "fedavg|sign_flip|no_gate",
+      "seed": 0,
+      "final_accuracy": 0.4625,
+      "final_loss": 1.0007719039916991,
+      "predicted_class_fraction": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "final_hash": "7bd6828b63e5af69b94488f9a0c88e3c",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.18075775008735023,
+        "mean_cosine_attacker_vs_benign": 0.18075775008735023,
+        "attacker_norm_mean": 2.169668296698422,
+        "benign_norm_mean": 2.9493862396150115,
+        "benign_norm_min": 2.9493862396150115,
+        "benign_norm_max": 2.9493862396150115,
+        "norm_ratio": 0.7273040639625723,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "sign_flip",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.106
+    },
+    {
+      "arm": "fedavg|sign_flip|certified_gate",
+      "seed": 0,
+      "final_accuracy": 0.5625,
+      "final_loss": 0.8308830261230469,
+      "predicted_class_fraction": {
+        "0": 0.05,
+        "1": 0.95
+      },
+      "final_hash": "36750bfc121404741832ae16b45b5bc5",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 1,
+      "rounds_rejected": 1,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.18075775008735023,
+        "mean_cosine_attacker_vs_benign": 0.18075775008735023,
+        "attacker_norm_mean": 2.169668296698422,
+        "benign_norm_mean": 2.9493862396150115,
+        "benign_norm_min": 2.9493862396150115,
+        "benign_norm_max": 2.9493862396150115,
+        "norm_ratio": 0.7273040639625723,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        0.36760916219987594,
+        1.0
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "7f1a486cf0667e6eb814e6ee71f3e4fd1d9dfc3be4457eee51151bcdece2c15e"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": false,
+          "vacuous": true,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 21,
+          "total_violations_raw": 15,
+          "distinct_violations_dedup_depth0": 6,
+          "distinct_sources": 12,
+          "raw_amplification": 2.5,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "05cf4fb70af280679cf98b74bd58901c1424aa0cc66ef7cbdaff0162f8c31d8f"
+        }
+      ],
+      "gate_on": true,
+      "attack": "sign_flip",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.187
+    },
+    {
+      "arm": "fedavg|legacy_gaussian|no_gate",
+      "seed": 0,
+      "final_accuracy": 0.6625,
+      "final_loss": 0.6702673435211182,
+      "predicted_class_fraction": {
+        "0": 0.5,
+        "1": 0.5
+      },
+      "final_hash": "e8fadd58923af6191ff74e7f1a7259b5",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0022210695183011967,
+        "mean_cosine_attacker_vs_benign": -0.0022210695183011967,
+        "attacker_norm_mean": 3.1704102539005516,
+        "benign_norm_mean": 2.994767270219605,
+        "benign_norm_min": 2.994767270219605,
+        "benign_norm_max": 2.994767270219605,
+        "norm_ratio": 1.0760155094624937,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.081
+    },
+    {
+      "arm": "fedavg|legacy_gaussian|certified_gate",
+      "seed": 0,
+      "final_accuracy": 0.5375,
+      "final_loss": 0.7825406074523926,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "6a677e6abf9d8eef208994d23a349491",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 1,
+      "rounds_rejected": 1,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0022210695183011967,
+        "mean_cosine_attacker_vs_benign": -0.0022210695183011967,
+        "attacker_norm_mean": 3.1704102539005516,
+        "benign_norm_mean": 2.994767270219605,
+        "benign_norm_min": 2.994767270219605,
+        "benign_norm_max": 2.994767270219605,
+        "norm_ratio": 1.0760155094624937,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        0.36760916219987594,
+        0.7237242360814096
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "3876e7f8ff0ecc6aaf6fc0b4b0c375a8d66b53f9b34bd57d02aae205412123ee"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": false,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "289e5ea7a45f5f3a6c9e91aa89616a4f4a4261b284513d7f72216f8355539822"
+        }
+      ],
+      "gate_on": true,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.142
+    },
+    {
+      "arm": "median|sign_flip|no_gate",
+      "seed": 0,
+      "final_accuracy": 0.4625,
+      "final_loss": 1.341960620880127,
+      "predicted_class_fraction": {
+        "0": 1.0,
+        "1": 0.0
+      },
+      "final_hash": "a52e648d2047aa4a0a7571900ba5da73",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0472956438267183,
+        "mean_cosine_attacker_vs_benign": -0.0472956438267183,
+        "attacker_norm_mean": 2.1818316804611486,
+        "benign_norm_mean": 2.544318929969596,
+        "benign_norm_min": 2.544318929969596,
+        "benign_norm_max": 2.544318929969596,
+        "norm_ratio": 0.8925699448083881,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "sign_flip",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.121
+    },
+    {
+      "arm": "median|sign_flip|certified_gate",
+      "seed": 0,
+      "final_accuracy": 0.5625,
+      "final_loss": 0.6900999069213867,
+      "predicted_class_fraction": {
+        "0": 0.025,
+        "1": 0.975
+      },
+      "final_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 0,
+      "rounds_rejected": 2,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.06923832316306441,
+        "mean_cosine_attacker_vs_benign": -0.06923832316306441,
+        "attacker_norm_mean": 2.7504467960115795,
+        "benign_norm_mean": 3.1129340743499636,
+        "benign_norm_min": 3.1129340743499636,
+        "benign_norm_max": 3.1129340743499636,
+        "norm_ratio": 0.8925699323178287,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        0.9658194732587342,
+        1.0
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": false,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 21,
+          "total_violations_raw": 15,
+          "distinct_violations_dedup_depth0": 6,
+          "distinct_sources": 12,
+          "raw_amplification": 2.5,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "9f68ebdafbf89f1779bd6758f55db1188edfdbe86e89931c73e185ab3db1278e"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": false,
+          "vacuous": true,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 21,
+          "total_violations_raw": 15,
+          "distinct_violations_dedup_depth0": 6,
+          "distinct_sources": 12,
+          "raw_amplification": 2.5,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "20bd89e347459277e7be8be7ccac61eb25ad5a759130a67601d8a3e9c807213e"
+        }
+      ],
+      "gate_on": true,
+      "attack": "sign_flip",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.183
+    },
+    {
+      "arm": "median|legacy_gaussian|no_gate",
+      "seed": 0,
+      "final_accuracy": 0.6625,
+      "final_loss": 0.6696889400482178,
+      "predicted_class_fraction": {
+        "0": 0.5,
+        "1": 0.5
+      },
+      "final_hash": "fd46f65e771345c6008f95b123be483c",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0022230068748106263,
+        "mean_cosine_attacker_vs_benign": -0.0022230068748106263,
+        "attacker_norm_mean": 3.1704102539005516,
+        "benign_norm_mean": 2.9957475383106367,
+        "benign_norm_min": 2.9957475383106367,
+        "benign_norm_max": 2.9957475383106367,
+        "norm_ratio": 1.0755611709102444,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.077
+    },
+    {
+      "arm": "median|legacy_gaussian|certified_gate",
+      "seed": 0,
+      "final_accuracy": 0.5375,
+      "final_loss": 0.7835177421569824,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "1a44bc4f9b27a501ca0672db18ee6796",
+      "initial_hash": "273cdc2175d2c93f9b12c133c87ea4eb",
+      "rounds_accepted": 1,
+      "rounds_rejected": 1,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0022230068748106263,
+        "mean_cosine_attacker_vs_benign": -0.0022230068748106263,
+        "attacker_norm_mean": 3.1704102539005516,
+        "benign_norm_mean": 2.9957475383106367,
+        "benign_norm_min": 2.9957475383106367,
+        "benign_norm_max": 2.9957475383106367,
+        "norm_ratio": 1.0755611709102444,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        0.36760916219987594,
+        0.7237242360814096
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "638fcfc700296aabb3423e437f72408e0bc2b5a4ebef74a5a80f9b1de35da7bd"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": false,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 6,
+            "1": 40,
+            "2": 0,
+            "3": 34
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.06545543584084396,
+          "certificate_binding_hash": "d01a3ba077f7a767bfd29f8ede84ba6f5a4a6b7fa8d50c5ff1cd12fd717dcb0e"
+        }
+      ],
+      "gate_on": true,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.14
+    },
+    {
+      "arm": "frozen_pretrained",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 0.6938919067382813,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 0,
+      "rounds_rejected": 0,
+      "n_rounds": 0,
+      "aggregator": "none",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": null,
+      "gate_bounds": [],
+      "gate_info": []
+    },
+    {
+      "arm": "clean_fedavg_no_gate",
+      "seed": 1,
+      "final_accuracy": 0.5375,
+      "final_loss": 0.7553825378417969,
+      "predicted_class_fraction": {
+        "0": 0.0125,
+        "1": 0.9875
+      },
+      "final_hash": "c77311373132f5e201ead3c0c43e244b",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ]
+    },
+    {
+      "arm": "no_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.4640668869018554,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "6f1daab497818defd4fe5df4264e31ad",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2356282748070131,
+        "mean_cosine_attacker_vs_benign": 0.2356282748070131,
+        "attacker_norm_mean": 1.2458269745060795,
+        "benign_norm_mean": 1.2749881538444874,
+        "benign_norm_min": 1.2749881538444874,
+        "benign_norm_max": 1.2749881538444874,
+        "norm_ratio": 0.9812002647786959,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ]
+    },
+    {
+      "arm": "always_accept_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.4640668869018554,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "6f1daab497818defd4fe5df4264e31ad",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "always_accept",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2356282748070131,
+        "mean_cosine_attacker_vs_benign": 0.2356282748070131,
+        "attacker_norm_mean": 1.2458269745060795,
+        "benign_norm_mean": 1.2749881538444874,
+        "benign_norm_min": 1.2749881538444874,
+        "benign_norm_max": 1.2749881538444874,
+        "norm_ratio": 0.9812002647786959,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "control": "always_accept"
+        },
+        {
+          "control": "always_accept"
+        }
+      ]
+    },
+    {
+      "arm": "always_reject_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 0.6938919067382813,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 0,
+      "rounds_rejected": 2,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "always_reject",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2844785261747408,
+        "mean_cosine_attacker_vs_benign": 0.2844785261747408,
+        "attacker_norm_mean": 1.3684619079349472,
+        "benign_norm_mean": 1.7410830047205836,
+        "benign_norm_min": 1.7410830047205836,
+        "benign_norm_max": 1.7410830047205836,
+        "norm_ratio": 0.8033355514584657,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "control": "always_reject"
+        },
+        {
+          "control": "always_reject"
+        }
+      ]
+    },
+    {
+      "arm": "clean_fedavg_no_attack_no_gate",
+      "seed": 1,
+      "final_accuracy": 0.5375,
+      "final_loss": 0.7553825378417969,
+      "predicted_class_fraction": {
+        "0": 0.0125,
+        "1": 0.9875
+      },
+      "final_hash": "c77311373132f5e201ead3c0c43e244b",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": null,
+      "aggregator_name": "fedavg",
+      "n_byzantine": 0
+    },
+    {
+      "arm": "clean_median_no_attack_no_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 0.7675411701202393,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "60aa92273af77782f6a9d3baec9322e9",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "none",
+      "mean_attack_diagnostics": null,
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": true,
+        "detail": "f=0, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": null,
+      "aggregator_name": "median",
+      "n_byzantine": 0
+    },
+    {
+      "arm": "fedavg|sign_flip|no_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.4640668869018554,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "6f1daab497818defd4fe5df4264e31ad",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2356282748070131,
+        "mean_cosine_attacker_vs_benign": 0.2356282748070131,
+        "attacker_norm_mean": 1.2458269745060795,
+        "benign_norm_mean": 1.2749881538444874,
+        "benign_norm_min": 1.2749881538444874,
+        "benign_norm_max": 1.2749881538444874,
+        "norm_ratio": 0.9812002647786959,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "sign_flip",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.097
+    },
+    {
+      "arm": "fedavg|sign_flip|certified_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.4640668869018554,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "6f1daab497818defd4fe5df4264e31ad",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2356282748070131,
+        "mean_cosine_attacker_vs_benign": 0.2356282748070131,
+        "attacker_norm_mean": 1.2458269745060795,
+        "benign_norm_mean": 1.2749881538444874,
+        "benign_norm_min": 1.2749881538444874,
+        "benign_norm_max": 1.2749881538444874,
+        "norm_ratio": 0.9812002647786959,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.5,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        0.34382409110451573,
+        0.34382409110451573
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "f214383166bec3a60894fb4881cb9bd208ba31eed47b589cfd8e2481850e67ff"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "86fc14fbb00788b473cf675e9d23746809dcca07b8a2fa7c2ccc77f1c1e82bcc"
+        }
+      ],
+      "gate_on": true,
+      "attack": "sign_flip",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.174
+    },
+    {
+      "arm": "fedavg|legacy_gaussian|no_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.0551136970520019,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "3ea876bae9f60584130ebd20e3d326d1",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0005956762526245094,
+        "mean_cosine_attacker_vs_benign": -0.0005956762526245094,
+        "attacker_norm_mean": 3.1669369118250223,
+        "benign_norm_mean": 1.4085260543856708,
+        "benign_norm_min": 1.4085260543856708,
+        "benign_norm_max": 1.4085260543856708,
+        "norm_ratio": 2.2717104615024772,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 1.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.058
+    },
+    {
+      "arm": "fedavg|legacy_gaussian|certified_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.0551136970520019,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "3ea876bae9f60584130ebd20e3d326d1",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "fedavg",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0005956762526245094,
+        "mean_cosine_attacker_vs_benign": -0.0005956762526245094,
+        "attacker_norm_mean": 3.1669369118250223,
+        "benign_norm_mean": 1.4085260543856708,
+        "benign_norm_min": 1.4085260543856708,
+        "benign_norm_max": 1.4085260543856708,
+        "norm_ratio": 2.2717104615024772,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 1.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "fedavg",
+        "requirement": "none",
+        "satisfied": true,
+        "detail": "no Byzantine-robustness assumption is claimed",
+        "n_clients": 2,
+        "n_byzantine_assumed": 0
+      },
+      "gate_bounds": [
+        0.34382409110451573,
+        0.34382409110451573
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "a20ecded425c8350989154a0a10490f9a2e31a8b55f3f89c665199a5698b0b37"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "6037da19e717520cbafb6c7432a27dc0e20e7c0bcae269980309ec97102f08b2"
+        }
+      ],
+      "gate_on": true,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "fedavg",
+      "n_byzantine": 1,
+      "wall_seconds": 0.129
+    },
+    {
+      "arm": "median|sign_flip|no_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.4598685264587403,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "ec38a2e907547c10dea618486a91bee2",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2403909696314092,
+        "mean_cosine_attacker_vs_benign": 0.2403909696314092,
+        "attacker_norm_mean": 1.240326744872875,
+        "benign_norm_mean": 1.2694879535720982,
+        "benign_norm_min": 1.2694879535720982,
+        "benign_norm_max": 1.2694879535720982,
+        "norm_ratio": 0.9812002351213275,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "sign_flip",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.087
+    },
+    {
+      "arm": "median|sign_flip|certified_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.4598685264587403,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "ec38a2e907547c10dea618486a91bee2",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": 0.2403909696314092,
+        "mean_cosine_attacker_vs_benign": 0.2403909696314092,
+        "attacker_norm_mean": 1.240326744872875,
+        "benign_norm_mean": 1.2694879535720982,
+        "benign_norm_min": 1.2694879535720982,
+        "benign_norm_max": 1.2694879535720982,
+        "norm_ratio": 0.9812002351213275,
+        "frac_within_benign_envelope": 0.5,
+        "attacker_norm_percentile_in_benign": 0.0,
+        "frac_rounds_stealthy": 0.5,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        0.34382409110451573,
+        0.34382409110451573
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "5a1a3db4ff674198d1909bd15b3f2d6d2199f58b8d7726a08c90965a73b7c405"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "803955aea9e17c51631e071878de12e90694edd9c8630f956d4f19081e22876a"
+        }
+      ],
+      "gate_on": true,
+      "attack": "sign_flip",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.158
+    },
+    {
+      "arm": "median|legacy_gaussian|no_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.056899642944336,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "1dda82bc1d6ab8962483f6f41c80b883",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "none",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0005956958866571784,
+        "mean_cosine_attacker_vs_benign": -0.0005956958866571784,
+        "attacker_norm_mean": 3.1669369118250223,
+        "benign_norm_mean": 1.407816931656752,
+        "benign_norm_min": 1.407816931656752,
+        "benign_norm_max": 1.407816931656752,
+        "norm_ratio": 2.273113510975584,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 1.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        null,
+        null
+      ],
+      "gate_info": [
+        {
+          "gate": "none"
+        },
+        {
+          "gate": "none"
+        }
+      ],
+      "gate_on": false,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.051
+    },
+    {
+      "arm": "median|legacy_gaussian|certified_gate",
+      "seed": 1,
+      "final_accuracy": 0.525,
+      "final_loss": 1.056899642944336,
+      "predicted_class_fraction": {
+        "0": 0.0,
+        "1": 1.0
+      },
+      "final_hash": "1dda82bc1d6ab8962483f6f41c80b883",
+      "initial_hash": "2f6cd2b885dd077b18ba595c351d1c2d",
+      "rounds_accepted": 2,
+      "rounds_rejected": 0,
+      "n_rounds": 2,
+      "aggregator": "median",
+      "gate": "certified_gate[certified]",
+      "mean_attack_diagnostics": {
+        "n_attackers": 1.0,
+        "n_benign": 1.0,
+        "mean_pairwise_cosine_attackers": null,
+        "min_pairwise_cosine_attackers": null,
+        "mean_pairwise_cosine_benign": null,
+        "cosine_attacker_mean_vs_benign_mean": -0.0005956958866571784,
+        "mean_cosine_attacker_vs_benign": -0.0005956958866571784,
+        "attacker_norm_mean": 3.1669369118250223,
+        "benign_norm_mean": 1.407816931656752,
+        "benign_norm_min": 1.407816931656752,
+        "benign_norm_max": 1.407816931656752,
+        "norm_ratio": 2.273113510975584,
+        "frac_within_benign_envelope": 0.0,
+        "attacker_norm_percentile_in_benign": 1.0,
+        "frac_rounds_stealthy": 0.0,
+        "frac_rounds_coordinated": 0.0
+      },
+      "aggregator_assumption": {
+        "aggregator": "median",
+        "requirement": "f < n/2",
+        "satisfied": false,
+        "detail": "f=1, n=2, n/2=1",
+        "n_clients": 2,
+        "n_byzantine_assumed": 1
+      },
+      "gate_bounds": [
+        0.34382409110451573,
+        0.34382409110451573
+      ],
+      "gate_info": [
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "1b9f994dcaa044efdf6c4523e88daaec2be874ab4ab73044ea36a7a3bcd59adb"
+        },
+        {
+          "mode": "certified",
+          "statistical_accept": true,
+          "vacuous": false,
+          "unaccounted_weight": 0.0,
+          "k_total": 4,
+          "budget_cap": 40,
+          "effective_delta": 0.025,
+          "allocation": {
+            "0": 0,
+            "1": 40,
+            "2": 0,
+            "3": 40
+          },
+          "allocation_strategy": "two_thirds",
+          "estimation_queries": 80,
+          "search_queries": 12,
+          "total_violations_raw": 0,
+          "distinct_violations_dedup_depth0": 0,
+          "distinct_sources": 12,
+          "raw_amplification": 0.0,
+          "mutator_arm": "search_guided",
+          "mkg_edge_density": 0.16666666666666666,
+          "mkg_density_flag": null,
+          "mkg_tau": 0.14557083319603176,
+          "certificate_binding_hash": "ec644e2a49b6c954b60ee08d8d61ec5fdf3acef7f6e7ec1d0a91f0d60663f7aa"
+        }
+      ],
+      "gate_on": true,
+      "attack": "legacy_gaussian",
+      "aggregator_name": "median",
+      "n_byzantine": 1,
+      "wall_seconds": 0.119
+    }
+  ],
+  "summary": {
+    "always_accept_gate": {
+      "mean": 0.49375,
+      "lo": 0.4625,
+      "hi": 0.525,
+      "n_seeds": 2,
+      "values": [
+        0.4625,
+        0.525
+      ]
+    },
+    "always_reject_gate": {
+      "mean": 0.54375,
+      "lo": 0.525,
+      "hi": 0.5625,
+      "n_seeds": 2,
+      "values": [
+        0.5625,
+        0.525
+      ]
+    },
+    "clean_fedavg_no_attack_no_gate": {
+      "mean": 0.5,
+      "lo": 0.4625,
+      "hi": 0.5375,
+      "n_seeds": 2,
+      "values": [
+        0.4625,
+        0.5375
+      ]
+    },
+    "clean_fedavg_no_gate": {
+      "mean": 0.5,
+      "lo": 0.4625,
+      "hi": 0.5375,
+      "n_seeds": 2,
+      "values": [
+        0.4625,
+        0.5375
+      ]
+    },
+    "clean_median_no_attack_no_gate": {
+      "mean": 0.55,
+      "lo": 0.525,
+      "hi": 0.575,
+      "n_seeds": 2,
+      "values": [
+        0.575,
+        0.525
+      ]
+    },
+    "fedavg|legacy_gaussian|certified_gate": {
+      "mean": 0.53125,
+      "lo": 0.525,
+      "hi": 0.5375,
+      "n_seeds": 2,
+      "values": [
+        0.5375,
+        0.525
+      ]
+    },
+    "fedavg|legacy_gaussian|no_gate": {
+      "mean": 0.59375,
+      "lo": 0.525,
+      "hi": 0.6625,
+      "n_seeds": 2,
+      "values": [
+        0.6625,
+        0.525
+      ]
+    },
+    "fedavg|sign_flip|certified_gate": {
+      "mean": 0.54375,
+      "lo": 0.525,
+      "hi": 0.5625,
+      "n_seeds": 2,
+      "values": [
+        0.5625,
+        0.525
+      ]
+    },
+    "fedavg|sign_flip|no_gate": {
+      "mean": 0.49375,
+      "lo": 0.4625,
+      "hi": 0.525,
+      "n_seeds": 2,
+      "values": [
+        0.4625,
+        0.525
+      ]
+    },
+    "frozen_pretrained": {
+      "mean": 0.54375,
+      "lo": 0.525,
+      "hi": 0.5625,
+      "n_seeds": 2,
+      "values": [
+        0.5625,
+        0.525
+      ]
+    },
+    "median|legacy_gaussian|certified_gate": {
+      "mean": 0.53125,
+      "lo": 0.525,
+      "hi": 0.5375,
+      "n_seeds": 2,
+      "values": [
+        0.5375,
+        0.525
+      ]
+    },
+    "median|legacy_gaussian|no_gate": {
+      "mean": 0.59375,
+      "lo": 0.525,
+      "hi": 0.6625,
+      "n_seeds": 2,
+      "values": [
+        0.6625,
+        0.525
+      ]
+    },
+    "median|sign_flip|certified_gate": {
+      "mean": 0.54375,
+      "lo": 0.525,
+      "hi": 0.5625,
+      "n_seeds": 2,
+      "values": [
+        0.5625,
+        0.525
+      ]
+    },
+    "median|sign_flip|no_gate": {
+      "mean": 0.49375,
+      "lo": 0.4625,
+      "hi": 0.525,
+      "n_seeds": 2,
+      "values": [
+        0.4625,
+        0.525
+      ]
+    },
+    "no_gate": {
+      "mean": 0.49375,
+      "lo": 0.4625,
+      "hi": 0.525,
+      "n_seeds": 2,
+      "values": [
+        0.4625,
+        0.525
+      ]
+    }
+  },
+  "hypotheses": {
+    "H3_gate_improves_quality_under_attack": {
+      "statement": "held-out accuracy with the certified gate > without it, on a test set the gate never saw",
+      "n_configurations": 4,
+      "n_where_gate_helps": 2,
+      "n_where_gate_is_the_do_nothing_baseline": 0,
+      "caveat": "A configuration where the gated model is byte-identical to the frozen pretrained checkpoint is NOT evidence that the gate works: it means the gate rejected every round, so the comparison only shows that federated training was net-harmful in that cell. This is audit finding F5 and it must be read together with the C1 verdict.",
+      "per_configuration": {
+        "fedavg|legacy_gaussian|certified_gate": {
+          "gate_mean": 0.53125,
+          "no_gate_mean": 0.59375,
+          "difference": -0.0625,
+          "gate_helps": false,
+          "p_value": 1.0,
+          "min_attainable_p": 0.5,
+          "n_seeds": 2,
+          "n_seeds_gate_rejected_every_round": 0,
+          "n_seeds_gated_model_is_the_frozen_checkpoint": 0,
+          "is_do_nothing_baseline": false
+        },
+        "fedavg|sign_flip|certified_gate": {
+          "gate_mean": 0.54375,
+          "no_gate_mean": 0.49375,
+          "difference": 0.04999999999999993,
+          "gate_helps": true,
+          "p_value": 1.0,
+          "min_attainable_p": 0.5,
+          "n_seeds": 2,
+          "n_seeds_gate_rejected_every_round": 0,
+          "n_seeds_gated_model_is_the_frozen_checkpoint": 0,
+          "is_do_nothing_baseline": false
+        },
+        "median|legacy_gaussian|certified_gate": {
+          "gate_mean": 0.53125,
+          "no_gate_mean": 0.59375,
+          "difference": -0.0625,
+          "gate_helps": false,
+          "p_value": 1.0,
+          "min_attainable_p": 0.5,
+          "n_seeds": 2,
+          "n_seeds_gate_rejected_every_round": 0,
+          "n_seeds_gated_model_is_the_frozen_checkpoint": 0,
+          "is_do_nothing_baseline": false
+        },
+        "median|sign_flip|certified_gate": {
+          "gate_mean": 0.54375,
+          "no_gate_mean": 0.49375,
+          "difference": 0.04999999999999993,
+          "gate_helps": true,
+          "p_value": 1.0,
+          "min_attainable_p": 0.5,
+          "n_seeds": 2,
+          "n_seeds_gate_rejected_every_round": 1,
+          "n_seeds_gated_model_is_the_frozen_checkpoint": 1,
+          "is_do_nothing_baseline": false
+        }
+      }
+    },
+    "C1_clean_fedavg_beats_frozen": {
+      "per_seed": {
+        "0": {
+          "criterion": "C1",
+          "statement": "clean FedAvg (0 attackers, no gate) > frozen pretrained on held-out test data",
+          "clean_fedavg": 0.4625,
+          "frozen_pretrained": 0.5625,
+          "delta": -0.09999999999999998,
+          "passed": false
+        },
+        "1": {
+          "criterion": "C1",
+          "statement": "clean FedAvg (0 attackers, no gate) > frozen pretrained on held-out test data",
+          "clean_fedavg": 0.5375,
+          "frozen_pretrained": 0.525,
+          "delta": 0.012499999999999956,
+          "passed": true
+        }
+      },
+      "n_seeds_passing": 1,
+      "n_seeds": 2
+    },
+    "F7_constant_predictor_collapse": {
+      "threshold": 0.97,
+      "statement": "a run predicting one class on >97% of the held-out set reports a class prior, not an accuracy (finding F7)",
+      "per_arm": {
+        "always_accept_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            1.0
+          ]
+        },
+        "always_reject_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            0.975,
+            1.0
+          ]
+        },
+        "clean_fedavg_no_attack_no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            0.9875
+          ]
+        },
+        "clean_fedavg_no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            0.9875
+          ]
+        },
+        "clean_median_no_attack_no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 1,
+          "max_class_fraction": [
+            0.9125,
+            1.0
+          ]
+        },
+        "fedavg|legacy_gaussian|certified_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            1.0
+          ]
+        },
+        "fedavg|legacy_gaussian|no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 1,
+          "max_class_fraction": [
+            0.5,
+            1.0
+          ]
+        },
+        "fedavg|sign_flip|certified_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 1,
+          "max_class_fraction": [
+            0.95,
+            1.0
+          ]
+        },
+        "fedavg|sign_flip|no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            1.0
+          ]
+        },
+        "frozen_pretrained": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            0.975,
+            1.0
+          ]
+        },
+        "median|legacy_gaussian|certified_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            1.0
+          ]
+        },
+        "median|legacy_gaussian|no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 1,
+          "max_class_fraction": [
+            0.5,
+            1.0
+          ]
+        },
+        "median|sign_flip|certified_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            0.975,
+            1.0
+          ]
+        },
+        "median|sign_flip|no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            1.0
+          ]
+        },
+        "no_gate": {
+          "n_seeds": 2,
+          "n_collapsed": 2,
+          "max_class_fraction": [
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "n_arms_with_any_collapse": 15,
+      "n_arms": 15
+    }
+  }
+}

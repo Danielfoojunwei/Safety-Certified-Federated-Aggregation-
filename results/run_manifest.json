@@ -1,0 +1,79 @@
+{
+  "generated_by": "python -m sca.experiments.run_all",
+  "generated_at_utc": "2026-07-29T07:02:41Z",
+  "deterministic_mode": false,
+  "git": {
+    "commit": "b55d568b0c8cd5e4ad348763b35bbc2a2bc361e9",
+    "branch": "claude/github-repo-ultracode-analysis-82w3sy",
+    "dirty": true
+  },
+  "versions": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.5-x86_64-with-glibc2.39",
+    "numpy": "2.4.6",
+    "torch": "2.13.0+cpu",
+    "sklearn": "1.9.0",
+    "scipy": "1.17.1",
+    "networkx": "3.6.1",
+    "datasets": "5.0.1",
+    "transformers": "5.14.1"
+  },
+  "config": {
+    "n_corpus": 8000,
+    "n_clients": 8,
+    "dirichlet_alpha": 0.5,
+    "max_len": 128,
+    "one_response_per_prompt": true,
+    "k_total": 8,
+    "budget_cap": 300,
+    "epsilon": 0.35,
+    "delta": 0.05,
+    "search_budget": 400,
+    "estimation_budget": 1600,
+    "max_depth": 3,
+    "branching_factor": 3,
+    "neighborhood_hops": 2,
+    "embedder": "hashed",
+    "n_rounds": 20,
+    "lr": 5.0,
+    "local_epochs": 5,
+    "batch_size": 32,
+    "pretrain_epochs": 5,
+    "pretrain_lr": 0.1,
+    "model_kind": "bow",
+    "seeds": [
+      42,
+      123,
+      456,
+      789,
+      1024,
+      2048,
+      4096,
+      8192,
+      16384,
+      32768
+    ],
+    "aggregators": [
+      "fedavg",
+      "median",
+      "trimmed_mean",
+      "krum",
+      "fltrust"
+    ],
+    "attacks": [
+      "sign_flip",
+      "ipm",
+      "alie",
+      "targeted_safety",
+      "legacy_gaussian"
+    ],
+    "n_byzantine": 2,
+    "smoke": false
+  },
+  "arms": "fl",
+  "files": [
+    "fl_arm.json",
+    "run_manifest.json"
+  ],
+  "wall_seconds": 13506.9
+}
