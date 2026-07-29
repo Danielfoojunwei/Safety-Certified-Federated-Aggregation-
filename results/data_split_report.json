@@ -1,0 +1,247 @@
+{
+  "corpus": {
+    "name": "PKU-Alignment/PKU-SafeRLHF",
+    "label_rule": "label = 0 if is_response_k_safe else 1, for k in {one k drawn uniformly per source row}; each (prompt, response_k) pair is one corpus row. Human annotation used verbatim, nothing inferred from text.",
+    "n": 8000,
+    "n_safe": 3815,
+    "n_unsafe": 4185,
+    "frac_unsafe": 0.523125,
+    "meta": {
+      "dataset_id": "PKU-Alignment/PKU-SafeRLHF",
+      "hf_split": "train[:32000]",
+      "n_source_rows_read": 32000,
+      "n_source_rows_used": 8000,
+      "n_duplicate_prompts_dropped": 248,
+      "seed": 42,
+      "one_response_per_prompt": true
+    }
+  },
+  "config": {
+    "n_clients": 8,
+    "dirichlet_alpha": 0.5,
+    "client_frac": 0.6,
+    "server_frac": 0.2,
+    "test_frac": 0.2,
+    "search_frac": 0.5,
+    "seed": 42,
+    "min_classes_per_client": 1,
+    "grouped_by_prompt": true,
+    "n_groups": 8000,
+    "n_discarded": 0,
+    "tokenizer": "gpt2"
+  },
+  "splits": [
+    {
+      "name": "client_0",
+      "role": "client_train",
+      "n": 722,
+      "n_safe": 607,
+      "n_unsafe": 115
+    },
+    {
+      "name": "client_1",
+      "role": "client_train",
+      "n": 1243,
+      "n_safe": 41,
+      "n_unsafe": 1202
+    },
+    {
+      "name": "client_2",
+      "role": "client_train",
+      "n": 1041,
+      "n_safe": 811,
+      "n_unsafe": 230
+    },
+    {
+      "name": "client_3",
+      "role": "client_train",
+      "n": 506,
+      "n_safe": 19,
+      "n_unsafe": 487
+    },
+    {
+      "name": "client_4",
+      "role": "client_train",
+      "n": 315,
+      "n_safe": 15,
+      "n_unsafe": 300
+    },
+    {
+      "name": "client_5",
+      "role": "client_train",
+      "n": 146,
+      "n_safe": 98,
+      "n_unsafe": 48
+    },
+    {
+      "name": "client_6",
+      "role": "client_train",
+      "n": 577,
+      "n_safe": 547,
+      "n_unsafe": 30
+    },
+    {
+      "name": "client_7",
+      "role": "client_train",
+      "n": 250,
+      "n_safe": 168,
+      "n_unsafe": 82
+    },
+    {
+      "name": "server_search",
+      "role": "server_search",
+      "n": 800,
+      "n_safe": 369,
+      "n_unsafe": 431
+    },
+    {
+      "name": "server_estimation",
+      "role": "server_estimation",
+      "n": 800,
+      "n_safe": 384,
+      "n_unsafe": 416
+    },
+    {
+      "name": "heldout_test",
+      "role": "heldout_test",
+      "n": 1600,
+      "n_safe": 756,
+      "n_unsafe": 844
+    }
+  ],
+  "client_label_distribution": [
+    {
+      "0": 607,
+      "1": 115
+    },
+    {
+      "0": 41,
+      "1": 1202
+    },
+    {
+      "0": 811,
+      "1": 230
+    },
+    {
+      "0": 19,
+      "1": 487
+    },
+    {
+      "0": 15,
+      "1": 300
+    },
+    {
+      "0": 98,
+      "1": 48
+    },
+    {
+      "0": 547,
+      "1": 30
+    },
+    {
+      "0": 168,
+      "1": 82
+    }
+  ],
+  "n_single_class_clients": 0,
+  "n_clients": 8,
+  "overlap_report": {
+    "pairwise_overlaps": {
+      "client_0|client_1": 0,
+      "client_0|client_2": 0,
+      "client_0|client_3": 0,
+      "client_0|client_4": 0,
+      "client_0|client_5": 0,
+      "client_0|client_6": 0,
+      "client_0|client_7": 0,
+      "client_0|server_search": 0,
+      "client_0|server_estimation": 0,
+      "client_0|heldout_test": 0,
+      "client_1|client_2": 0,
+      "client_1|client_3": 0,
+      "client_1|client_4": 0,
+      "client_1|client_5": 0,
+      "client_1|client_6": 0,
+      "client_1|client_7": 0,
+      "client_1|server_search": 0,
+      "client_1|server_estimation": 0,
+      "client_1|heldout_test": 0,
+      "client_2|client_3": 0,
+      "client_2|client_4": 0,
+      "client_2|client_5": 0,
+      "client_2|client_6": 0,
+      "client_2|client_7": 0,
+      "client_2|server_search": 0,
+      "client_2|server_estimation": 0,
+      "client_2|heldout_test": 0,
+      "client_3|client_4": 0,
+      "client_3|client_5": 0,
+      "client_3|client_6": 0,
+      "client_3|client_7": 0,
+      "client_3|server_search": 0,
+      "client_3|server_estimation": 0,
+      "client_3|heldout_test": 0,
+      "client_4|client_5": 0,
+      "client_4|client_6": 0,
+      "client_4|client_7": 0,
+      "client_4|server_search": 0,
+      "client_4|server_estimation": 0,
+      "client_4|heldout_test": 0,
+      "client_5|client_6": 0,
+      "client_5|client_7": 0,
+      "client_5|server_search": 0,
+      "client_5|server_estimation": 0,
+      "client_5|heldout_test": 0,
+      "client_6|client_7": 0,
+      "client_6|server_search": 0,
+      "client_6|server_estimation": 0,
+      "client_6|heldout_test": 0,
+      "client_7|server_search": 0,
+      "client_7|server_estimation": 0,
+      "client_7|heldout_test": 0,
+      "server_search|server_estimation": 0,
+      "server_search|heldout_test": 0,
+      "server_estimation|heldout_test": 0
+    },
+    "max_pairwise_overlap": 0,
+    "n_leaf_splits": 11,
+    "total_ids_across_splits": 8000,
+    "n_distinct_ids": 8000,
+    "duplicated_ids": 0,
+    "corpus_size": 8000,
+    "verification_pool_is_union_of_search_and_estimation": true
+  },
+  "group_overlap_report": {
+    "grouped_by_prompt": true,
+    "pairwise_group_overlaps": {
+      "client_0|server_search": 0,
+      "client_0|server_estimation": 0,
+      "client_0|heldout_test": 0,
+      "client_1|server_search": 0,
+      "client_1|server_estimation": 0,
+      "client_1|heldout_test": 0,
+      "client_2|server_search": 0,
+      "client_2|server_estimation": 0,
+      "client_2|heldout_test": 0,
+      "client_3|server_search": 0,
+      "client_3|server_estimation": 0,
+      "client_3|heldout_test": 0,
+      "client_4|server_search": 0,
+      "client_4|server_estimation": 0,
+      "client_4|heldout_test": 0,
+      "client_5|server_search": 0,
+      "client_5|server_estimation": 0,
+      "client_5|heldout_test": 0,
+      "client_6|server_search": 0,
+      "client_6|server_estimation": 0,
+      "client_6|heldout_test": 0,
+      "client_7|server_search": 0,
+      "client_7|server_estimation": 0,
+      "client_7|heldout_test": 0,
+      "server_search|server_estimation": 0,
+      "server_search|heldout_test": 0,
+      "server_estimation|heldout_test": 0
+    },
+    "max_group_overlap": 0
+  }
+}

@@ -1,232 +1,330 @@
-"""Tests for benchmark suite integration."""
+"""Tests for the benchmark suites (audit finding F12).
 
-import numpy as np
+The central test is :class:`TestNoFabrication`: it walks every registered
+non-synthetic suite and asserts that the samples it emits came from the Hub,
+not from an f-string.  If someone reintroduces a ``_generate_synthetic`` path
+behind a real citation, these fail.
+"""
+
+from __future__ import annotations
+
+import inspect
+import json
+import re
+
 import pytest
 
+from sca.experiments import benchmarks as B
 from sca.experiments.benchmarks import (
+    BENCHMARK_REGISTRY,
+    REMOVED_SUITES,
+    SYNTHETIC_REGISTRY,
+    Benchmark,
     BenchmarkResult,
     BenchmarkSample,
     BenchmarkType,
-    CASEBenchSuite,
-    HHHAlignmentSuite,
+    BenchmarkUnavailableError,
     JailbreakBenchSuite,
     SafetyBenchSuite,
     SafetyCategory,
+    SyntheticSmokeSuite,
     ToxiGenSuite,
     TruthfulQASuite,
     get_all_benchmarks,
+    looks_like_refusal,
+    probe_benchmark_availability,
     run_benchmark_suite,
 )
 
 
-class TestBenchmarkSamples:
+def hub_reachable() -> bool:
+    try:
+        from datasets import load_dataset
+
+        load_dataset("JailbreakBench/JBB-Behaviors", "behaviors", split="harmful[:2]")
+        return True
+    except Exception:
+        return False
+
+
+needs_network = pytest.mark.skipif(
+    not hub_reachable(), reason="HuggingFace Hub not reachable"
+)
+
+
+def refusing_model(interaction):
+    return "I cannot help with that request."
+
+
+def compliant_model(interaction):
+    return "Sure, here is a detailed answer."
+
+
+# ---------------------------------------------------------------------------
+# Static guarantees -- these run without a network
+# ---------------------------------------------------------------------------
+
+
+class TestNoFabrication:
+    """F12: a real citation requires real data."""
+
+    def test_no_generate_synthetic_helper_survives(self):
+        """No suite may still carry the fabrication entry point."""
+        assert not hasattr(B, "_generate_synthetic")
+        for cls in list(BENCHMARK_REGISTRY.values()) + list(
+            SYNTHETIC_REGISTRY.values()
+        ):
+            assert not hasattr(cls, "_generate_synthetic"), cls.__name__
+        # and no *real* suite's source may contain a generated-prompt f-string
+        for name, cls in BENCHMARK_REGISTRY.items():
+            src = inspect.getsource(cls)
+            assert 'f"Safety question' not in src, name
+            assert "_generate_synthetic" not in src, name
+
+    def test_registry_contains_only_real_suites(self):
+        for name, cls in BENCHMARK_REGISTRY.items():
+            assert cls.is_synthetic is False, name
+            assert cls.hub_dataset, f"{name} claims to be real but names no dataset"
+
+    def test_synthetic_suites_are_named_synthetic_and_cite_nothing(self):
+        for name, cls in SYNTHETIC_REGISTRY.items():
+            assert cls.is_synthetic is True
+            assert name.lower().startswith("synthetic")
+            assert cls.__name__.startswith("Synthetic")
+            assert cls.hub_dataset is None
+            doc = cls.__doc__ or ""
+            # No venue / year citations allowed on a synthetic suite.
+            assert not re.search(r"(NeurIPS|ICLR|ACL|ICML|20\d\d)", doc), doc
+
+    def test_deleted_suites_are_gone_and_documented(self):
+        for gone in ("CASEBenchSuite", "HHHAlignmentSuite"):
+            assert not hasattr(B, gone)
+            assert gone in REMOVED_SUITES
+            assert len(REMOVED_SUITES[gone]) > 40  # a real reason, not a stub
+
+    def test_get_all_benchmarks_excludes_synthetic_by_default(self):
+        names = {b.name for b in get_all_benchmarks()}
+        assert "SyntheticSmoke" not in names
+        assert "SyntheticSmoke" in {
+            b.name for b in get_all_benchmarks(include_synthetic=True)
+        }
+
+    def test_legacy_n_synthetic_kwarg_warns_and_is_ignored(self):
+        with pytest.warns(DeprecationWarning):
+            b = SafetyBenchSuite(n_synthetic=50)
+        assert not hasattr(b, "n_synthetic")
+
+    def test_unavailable_dataset_raises_rather_than_falling_back(self):
+        class Broken(SafetyBenchSuite):
+            hub_dataset = "this-org/definitely-not-a-dataset"
+
+        with pytest.raises(BenchmarkUnavailableError):
+            Broken().load()
+
+
+class TestPrimitives:
     def test_sample_creation(self):
-        s = BenchmarkSample(
-            id="test_1",
-            interaction={"prompt": "Hello"},
-            ground_truth="greeting",
-            category="general",
-        )
-        assert s.id == "test_1"
-        assert s.interaction["prompt"] == "Hello"
+        s = BenchmarkSample(id="t1", interaction={"prompt": "hi"},
+                            ground_truth="greeting", category="general")
+        assert s.id == "t1"
 
     def test_safety_categories(self):
         assert SafetyCategory.VIOLENCE.value == "violence"
         assert len(SafetyCategory) >= 6
 
+    def test_refusal_detector(self):
+        assert looks_like_refusal("I cannot do that")
+        assert looks_like_refusal("I'm unable to comply")
+        assert not looks_like_refusal("Here is how you do it")
 
-class TestSafetyBench:
-    def test_load_synthetic(self):
-        bench = SafetyBenchSuite(n_synthetic=20)
-        samples = bench.load()
+    def test_pick_choice_prefers_letter(self):
+        assert B._pick_choice("B) the second one", ["yes", "no"]) == 1
+        assert B._pick_choice("A", ["yes", "no"]) == 0
+
+    def test_pick_choice_falls_back_to_overlap(self):
+        assert B._pick_choice("watermelon seeds pass through",
+                              ["nothing at all", "watermelon seeds pass"]) == 1
+
+    def test_pick_choice_returns_minus_one_on_no_match(self):
+        assert B._pick_choice("zzzz", ["alpha", "beta"]) == -1
+
+
+class TestSyntheticSmoke:
+    def test_load_and_evaluate(self):
+        s = SyntheticSmokeSuite(n_samples=20)
+        samples = s.load()
         assert len(samples) == 20
-        assert all(isinstance(s, BenchmarkSample) for s in samples)
-        assert bench.benchmark_type == BenchmarkType.SAFETY
+        assert all(x.metadata["synthetic"] for x in samples)
+        res = s.evaluate(refusing_model, samples)
+        assert res.benchmark_name == "SyntheticSmoke"
+        assert "WARNING" in res.provenance
+        assert s.benchmark_type is BenchmarkType.SYNTHETIC
 
-    def test_evaluate_safe_model(self):
-        """Safe model that refuses unsafe prompts and answers safe ones."""
-        bench = SafetyBenchSuite(n_synthetic=20)
-        samples = bench.load()
-
-        def model_fn(interaction):
-            if interaction.get("requires_refusal"):
-                return "I cannot help with that request."
-            return "Here is a helpful answer to your question."
-
-        result = bench.evaluate(model_fn, samples)
-        assert isinstance(result, BenchmarkResult)
-        assert result.benchmark_name == "SafetyBench"
-        assert result.n_samples == 20
-        assert "safety_understanding_accuracy" in result.metrics
-        assert result.metrics["safety_understanding_accuracy"] > 0.5
-
-    def test_evaluate_unsafe_model(self):
-        """Model that never refuses -- should have low accuracy on unsafe items."""
-        bench = SafetyBenchSuite(n_synthetic=20)
-        samples = bench.load()
-
-        def model_fn(interaction):
-            return "Here is the information you requested."
-
-        result = bench.evaluate(model_fn, samples)
-        # Some samples require refusal, so accuracy should be < 1.0
-        assert result.metrics["safety_understanding_accuracy"] < 1.0
-
-    def test_to_verifier_interactions(self):
-        bench = SafetyBenchSuite(n_synthetic=10)
-        samples = bench.load()
-        interactions = bench.to_verifier_interactions(samples)
-        assert len(interactions) == 10
-        assert all(isinstance(x, dict) for x in interactions)
+    def test_deterministic_without_pythonhashseed(self):
+        a = [x.interaction["requires_refusal"] for x in SyntheticSmokeSuite(30).load()]
+        b = [x.interaction["requires_refusal"] for x in SyntheticSmokeSuite(30).load()]
+        assert a == b
 
 
-class TestJailbreakBench:
-    def test_load_synthetic(self):
-        bench = JailbreakBenchSuite(n_synthetic=30)
-        samples = bench.load()
-        assert len(samples) == 30
-        misuse = [s for s in samples if s.category == "misuse"]
-        benign = [s for s in samples if s.category == "benign"]
-        assert len(misuse) > 0
-        assert len(benign) > 0
-
-    def test_evaluate_resistant_model(self):
-        """Model that always refuses jailbreaks."""
-        bench = JailbreakBenchSuite(n_synthetic=20)
-        samples = bench.load()
-
-        def model_fn(interaction):
-            if interaction.get("requires_refusal"):
-                return "I refuse to help with that."
-            return "Here is a helpful response."
-
-        result = bench.evaluate(model_fn, samples)
-        assert result.metrics["jailbreak_success_rate"] == 0.0
-        assert result.metrics["refusal_accuracy"] == 1.0
-        assert result.metrics["over_refusal_rate"] == 0.0
-
-    def test_evaluate_vulnerable_model(self):
-        """Model that complies with everything -- vulnerable to jailbreaks."""
-        bench = JailbreakBenchSuite(n_synthetic=20)
-        samples = bench.load()
-
-        def model_fn(interaction):
-            return "Sure, here is what you asked for."
-
-        result = bench.evaluate(model_fn, samples)
-        # Should have high jailbreak success rate
-        assert result.metrics["jailbreak_success_rate"] > 0.0
-        assert result.metrics["refusal_accuracy"] < 1.0
+# ---------------------------------------------------------------------------
+# Real data
+# ---------------------------------------------------------------------------
 
 
-class TestTruthfulQA:
-    def test_load_synthetic(self):
-        bench = TruthfulQASuite(n_synthetic=15)
-        samples = bench.load()
-        assert len(samples) == 15
+@needs_network
+class TestRealSafetyBench:
+    def test_dev_config_is_labelled(self):
+        s = SafetyBenchSuite(config="dev").load()
+        assert len(s) == 35, "SafetyBench dev is 5 questions x 7 categories"
+        assert all(x.ground_truth is not None for x in s)
+        assert len({x.category for x in s}) == 7
+
+    def test_questions_are_not_templated_placeholders(self):
+        s = SafetyBenchSuite(config="dev").load()
+        for x in s:
+            assert not re.match(r"Safety question \d+", x.interaction["prompt"])
+        assert len({x.interaction["prompt"] for x in s}) == len(s)
+
+    def test_subsampling_keeps_all_categories(self):
+        s = SafetyBenchSuite(config="dev", max_samples=14).load()
+        assert len(s) == 14
+        assert len({x.category for x in s}) == 7
 
     def test_evaluate(self):
-        bench = TruthfulQASuite(n_synthetic=10)
-        samples = bench.load()
-
-        def model_fn(interaction):
-            # Generic response that may or may not be truthful
-            return "No, that is a common misconception."
-
-        result = bench.evaluate(model_fn, samples)
-        assert "truthful_rate" in result.metrics
-        assert "informative_rate" in result.metrics
+        suite = SafetyBenchSuite(config="dev")
+        res = suite.evaluate(refusing_model, suite.load())
+        assert 0.0 <= res.metrics["safety_understanding_accuracy"] <= 1.0
+        assert res.metrics["n_labelled"] == 35
 
 
-class TestToxiGen:
-    def test_load_synthetic(self):
-        bench = ToxiGenSuite(n_synthetic=20)
-        samples = bench.load()
-        assert len(samples) == 20
-        toxic = [s for s in samples if s.category == "toxic"]
-        benign = [s for s in samples if s.category == "benign"]
-        assert len(toxic) > 0
-        assert len(benign) > 0
+@needs_network
+class TestRealJailbreakBench:
+    def test_loads_100_harmful_and_100_benign(self):
+        s = JailbreakBenchSuite().load()
+        harmful = [x for x in s if x.metadata["split"] == "harmful"]
+        benign = [x for x in s if x.metadata["split"] == "benign"]
+        assert len(harmful) == 100
+        assert len(benign) == 100
 
-    def test_evaluate(self):
-        bench = ToxiGenSuite(n_synthetic=20)
-        samples = bench.load()
+    def test_goals_are_verbatim_by_default(self):
+        s = JailbreakBenchSuite(include_benign=False).load()
+        assert all(x.metadata["template"] == "verbatim" for x in s)
+        assert not any("Ignore previous instructions" in x.interaction["prompt"]
+                       for x in s)
 
-        def model_fn(interaction):
-            if "trust" in interaction.get("prompt", "").lower():
-                return "I cannot continue that harmful statement."
-            return "This is a positive continuation."
+    def test_sca_wrappers_are_labelled_as_ours(self):
+        s = JailbreakBenchSuite(use_templates=True, include_benign=False).load()
+        kinds = {x.metadata["template"] for x in s}
+        assert kinds == {"verbatim", "sca_wrapper"}
 
-        result = bench.evaluate(model_fn, samples)
-        assert "toxicity_detection_rate" in result.metrics
-        assert "benign_pass_rate" in result.metrics
-        assert "balanced_accuracy" in result.metrics
+    def test_max_samples_keeps_both_splits(self):
+        s = JailbreakBenchSuite(max_samples=20).load()
+        assert len([x for x in s if x.metadata["split"] == "harmful"]) == 10
+        assert len([x for x in s if x.metadata["split"] == "benign"]) == 10
 
+    def test_refusing_model_scores_zero_jailbreak_and_full_over_refusal(self):
+        suite = JailbreakBenchSuite(max_samples=20)
+        res = suite.evaluate(refusing_model, suite.load())
+        assert res.metrics["jailbreak_success_rate"] == 0.0
+        assert res.metrics["over_refusal_rate_on_benign"] == 1.0
 
-class TestCASEBench:
-    def test_load_synthetic(self):
-        bench = CASEBenchSuite(n_synthetic=25)
-        samples = bench.load()
-        assert len(samples) == 25
-        contexts = set(s.category for s in samples)
-        assert len(contexts) > 1  # Multiple contexts
-
-    def test_evaluate_context_aware(self):
-        bench = CASEBenchSuite(n_synthetic=20)
-        samples = bench.load()
-
-        def model_fn(interaction):
-            if interaction.get("requires_refusal"):
-                return "I cannot provide that information."
-            return "Here is the context-appropriate response."
-
-        result = bench.evaluate(model_fn, samples)
-        assert "context_aware_accuracy" in result.metrics
-        assert "over_refusal_rate" in result.metrics
-        assert "under_refusal_rate" in result.metrics
-        assert len(result.per_category_metrics) > 0
+    def test_compliant_model_scores_full_jailbreak(self):
+        suite = JailbreakBenchSuite(max_samples=20)
+        res = suite.evaluate(compliant_model, suite.load())
+        assert res.metrics["jailbreak_success_rate"] == 1.0
+        assert res.metrics["over_refusal_rate_on_benign"] == 0.0
 
 
-class TestHHHAlignment:
-    def test_load_synthetic(self):
-        bench = HHHAlignmentSuite(n_synthetic=15)
-        samples = bench.load()
-        assert len(samples) == 15
+@needs_network
+class TestRealTruthfulQA:
+    def test_817_questions(self):
+        s = TruthfulQASuite().load()
+        assert len(s) == 817
 
-    def test_evaluate(self):
-        bench = HHHAlignmentSuite(n_synthetic=20)
-        samples = bench.load()
+    def test_carries_real_reference_answers(self):
+        s = TruthfulQASuite(max_samples=20).load()
+        for x in s:
+            assert x.ground_truth["correct"] and x.ground_truth["incorrect"]
 
-        def model_fn(interaction):
-            if interaction.get("requires_refusal"):
-                return "I cannot help with harmful requests."
-            return "Here is a helpful and detailed response to your question."
+    def test_oracle_beats_anti_oracle(self):
+        suite = TruthfulQASuite(max_samples=60)
+        samples = suite.load()
+        gt = {s.id: s.ground_truth for s in samples}
+        good = suite.evaluate(
+            lambda i: "", samples)  # placeholder to keep signature symmetric
+        by_id = {s.interaction["prompt"]: s.id for s in samples}
 
-        result = bench.evaluate(model_fn, samples)
-        assert "helpfulness" in result.metrics
-        assert "honesty" in result.metrics
-        assert "harmlessness" in result.metrics
-        assert "hhh_aggregate" in result.metrics
+        def oracle(inter):
+            return gt[by_id[inter["prompt"]]]["best"]
+
+        def anti(inter):
+            return gt[by_id[inter["prompt"]]]["incorrect"][0]
+
+        r_good = suite.evaluate(oracle, samples).metrics["truthfulness_rate"]
+        r_bad = suite.evaluate(anti, samples).metrics["truthfulness_rate"]
+        assert r_good > r_bad
+        assert good.n_samples == len(samples)
+
+    def test_scoring_caveat_is_recorded(self):
+        suite = TruthfulQASuite(max_samples=5)
+        res = suite.evaluate(compliant_model, suite.load())
+        assert "not comparable" in res.provenance["scoring"]
 
 
-class TestBenchmarkRegistry:
-    def test_get_all_benchmarks(self):
-        benchmarks = get_all_benchmarks(n_synthetic=10)
-        assert len(benchmarks) >= 6
-        names = {b.name for b in benchmarks}
-        assert "SafetyBench" in names
-        assert "JailbreakBench" in names
-        assert "TruthfulQA" in names
+@needs_network
+class TestRealToxiGen:
+    def test_loads_annotated_subset_with_human_scores(self):
+        s = ToxiGenSuite(max_samples=50).load()
+        assert len(s) == 50
+        assert all("toxicity_human" in x.metadata for x in s)
+        assert {x.ground_truth for x in s} <= {"toxic", "benign"}
+
+    def test_statements_are_real_text_not_placeholders(self):
+        s = ToxiGenSuite(max_samples=50).load()
+        assert len({x.interaction["statement"] for x in s}) > 40
+
+    def test_deterministic_subsample(self):
+        a = [x.id for x in ToxiGenSuite(max_samples=30, seed=3).load()]
+        b = [x.id for x in ToxiGenSuite(max_samples=30, seed=3).load()]
+        c = [x.id for x in ToxiGenSuite(max_samples=30, seed=4).load()]
+        assert a == b
+        assert a != c
+
+    def test_oracle_detector_is_perfect(self):
+        suite = ToxiGenSuite(max_samples=60)
+        samples = suite.load()
+        gt = {s.interaction["statement"]: s.ground_truth for s in samples}
+        res = suite.evaluate(
+            lambda i: "toxic" if gt[i["statement"]] == "toxic" else "benign",
+            samples,
+        )
+        assert res.metrics["toxicity_detection_accuracy"] == 1.0
+
+
+@needs_network
+class TestSuiteRunner:
+    def test_probe_reports_real_availability(self):
+        rep = probe_benchmark_availability()
+        for name in BENCHMARK_REGISTRY:
+            assert rep[name]["available"] is True, rep[name]["error"]
+            assert rep[name]["n_samples"] > 0
+        assert "_removed" in rep
 
     def test_run_benchmark_suite(self):
-        def model_fn(interaction):
-            if interaction.get("requires_refusal"):
-                return "I cannot assist with that."
-            return "Here is a helpful response."
+        res = run_benchmark_suite(refusing_model, get_all_benchmarks(max_samples=10))
+        assert set(res) == set(BENCHMARK_REGISTRY)
+        assert all(isinstance(r, BenchmarkResult) for r in res.values())
 
-        benchmarks = get_all_benchmarks(n_synthetic=5)
-        results = run_benchmark_suite(model_fn, benchmarks)
-        assert len(results) == len(benchmarks)
-        for name, result in results.items():
-            assert isinstance(result, BenchmarkResult)
-            assert result.n_samples > 0
+    def test_results_are_json_serialisable(self):
+        res = run_benchmark_suite(refusing_model, get_all_benchmarks(max_samples=6))
+        json.dumps({k: {"metrics": v.metrics, "provenance": v.provenance}
+                    for k, v in res.items()}, default=str)
+
+    def test_runner_propagates_unavailability_by_default(self):
+        class Broken(SafetyBenchSuite):
+            hub_dataset = "this-org/definitely-not-a-dataset"
+
+        with pytest.raises(BenchmarkUnavailableError):
+            run_benchmark_suite(refusing_model, [Broken()])
+        assert run_benchmark_suite(refusing_model, [Broken()],
+                                   skip_unavailable=True) == {}

@@ -1,0 +1,12 @@
+{
+  "_generated_by": "python -m sca.experiments.run_headline_numbers --repro-check",
+  "command": "python -m sca.utils.reprocheck check --repeats 3 --clean --workdir /tmp/sca-c4-lkeztrn2 --cmd python -m sca.experiments.run_all --smoke",
+  "wrapped_experiment_command": "python -m sca.experiments.run_all --smoke",
+  "repeats": 3,
+  "pythonhashseed_set": false,
+  "reproducible": true,
+  "returncode": 0,
+  "detail": "artifacts: /tmp/sca-c4-lkeztrn2",
+  "console_stdout": "[run1] probe: components exercised (8): knowledge_graph.embedding, knowledge_graph.regions, seeding.derive_seed, seeding.stable_hash, seeding.stable_rng, torch, utils.crypto, utils.stats\nsummary_digest 05791cacf08e289cecffeee3f1705fdcc06b7f1ce6d3986143d079c278575706\n[run1] wrapped command ok\n[run2] probe: components exercised (8): knowledge_graph.embedding, knowledge_graph.regions, seeding.derive_seed, seeding.stable_hash, seeding.stable_rng, torch, utils.crypto, utils.stats\nsummary_digest 05791cacf08e289cecffeee3f1705fdcc06b7f1ce6d3986143d079c278575706\n[run2] wrapped command ok\n[run3] probe: components exercised (8): knowledge_graph.embedding, knowledge_graph.regions, seeding.derive_seed, seeding.stable_hash, seeding.stable_rng, torch, utils.crypto, utils.stats\nsummary_digest 05791cacf08e289cecffeee3f1705fdcc06b7f1ce6d3986143d079c278575706\n[run3] wrapped command ok\nREPRODUCIBLE: 3 runs agree byte-for-byte over 5 file(s).\n  (3 separate processes, with PYTHONHASHSEED unset (hash randomisation ACTIVE))\nartifacts: /tmp/sca-c4-lkeztrn2\n",
+  "console_stderr": ""
+}

@@ -1,0 +1,62 @@
+{
+  "config": {
+    "k": 8,
+    "budget_cap": 300,
+    "delta": 0.05,
+    "trials": 20000,
+    "pilot": 32,
+    "keep": 3,
+    "p_true": 0.5,
+    "rng_seed": 20240729,
+    "chunk": 2000
+  },
+  "target_coverage_1_minus_delta": 0.95,
+  "true_weighted_violation_rate": 0.5,
+  "H1_coverage": {
+    "optimal_stopping_adversary": {
+      "coverage": 0.9999,
+      "n_failed_trials": 2,
+      "n_trials": 20000,
+      "passes": true
+    },
+    "adaptive_reallocation_adversary": {
+      "coverage": 0.9999,
+      "n_failed_trials": 2,
+      "n_trials": 20000,
+      "passes": true
+    },
+    "weighted_aggregate": {
+      "coverage": 1.0,
+      "n_failed_trials": 0,
+      "n_trials": 20000,
+      "passes": true
+    },
+    "empirical_bernstein_optional_variant": {
+      "coverage": 1.0,
+      "n_failed_trials": 0,
+      "n_trials": 20000,
+      "passes": true
+    }
+  },
+  "negative_controls": {
+    "legacy_fixed_m_width": {
+      "coverage": 0.95995,
+      "n_failed_trials": 801,
+      "must_fail_to_cover": true,
+      "correctly_fails": false,
+      "note": "the pre-rebuild width sqrt(ln(2K/delta)/(2m)); if this covered, the positive result would be vacuous"
+    },
+    "data_derived_k_dropping_empty_regions": {
+      "coverage": 0.0,
+      "must_fail_to_cover": true,
+      "correctly_fails": true,
+      "note": "finding F10 reproduced exactly"
+    }
+  },
+  "cost_of_the_anytime_correction": {
+    "mean_certified_bound_theorem1": 0.632370391818881,
+    "mean_certified_bound_legacy": 0.5881125676363707,
+    "inflation": 0.04425782418251034,
+    "note": "the price of soundness under adaptive allocation: the ln(M) factor widens every interval by this much on average, at p=0.5 and m chosen adversarially"
+  }
+}

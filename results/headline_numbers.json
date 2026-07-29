@@ -1,0 +1,2663 @@
+{
+  "_readme": "Machine-readable map from every claim the paper may make to its value, CI, source file and source key. THE PAPER MAY USE NOTHING ELSE. Entries with status='NOT MEASURED' were not produced by any run and must not appear in the paper.",
+  "_generated_by": "python -m sca.experiments.run_headline_numbers",
+  "provenance": {
+    "generated_by": "python -m sca.experiments.run_all",
+    "generated_at_utc": "2026-07-29T03:13:55Z",
+    "deterministic_mode": false,
+    "git": {
+      "commit": "b55d568b0c8cd5e4ad348763b35bbc2a2bc361e9",
+      "branch": "claude/github-repo-ultracode-analysis-82w3sy",
+      "dirty": true
+    },
+    "versions": {
+      "python": "3.11.15",
+      "platform": "Linux-6.18.5-x86_64-with-glibc2.39",
+      "numpy": "2.4.6",
+      "torch": "2.13.0+cpu",
+      "sklearn": "1.9.0",
+      "scipy": "1.17.1",
+      "networkx": "3.6.1",
+      "datasets": "5.0.1",
+      "transformers": "5.14.1"
+    },
+    "config": {
+      "n_corpus": 8000,
+      "n_clients": 8,
+      "dirichlet_alpha": 0.5,
+      "max_len": 128,
+      "one_response_per_prompt": true,
+      "k_total": 8,
+      "budget_cap": 300,
+      "epsilon": 0.35,
+      "delta": 0.05,
+      "search_budget": 400,
+      "estimation_budget": 1600,
+      "max_depth": 3,
+      "branching_factor": 3,
+      "neighborhood_hops": 2,
+      "embedder": "hashed",
+      "n_rounds": 20,
+      "lr": 5.0,
+      "local_epochs": 5,
+      "batch_size": 32,
+      "pretrain_epochs": 5,
+      "pretrain_lr": 0.1,
+      "model_kind": "bow",
+      "seeds": [
+        42,
+        123,
+        456,
+        789,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384,
+        32768
+      ],
+      "aggregators": [
+        "fedavg",
+        "median",
+        "trimmed_mean",
+        "krum",
+        "fltrust"
+      ],
+      "attacks": [
+        "sign_flip",
+        "ipm",
+        "alie",
+        "targeted_safety",
+        "legacy_gaussian"
+      ],
+      "n_byzantine": 2,
+      "smoke": false
+    },
+    "arm": "verifier"
+  },
+  "claims": {
+    "H1_coverage_optimal_stopping_adversary": {
+      "value": 0.99995,
+      "source_file": "soundness_theorem1.json",
+      "source_key": "H1_coverage.optimal_stopping_adversary.coverage",
+      "n_seeds": 20000,
+      "note": "Monte-Carlo coverage of Theorem 1 when the adversary sees the whole sample path and stops at the m minimising the UCB; target >= 0.9"
+    },
+    "H1_coverage_adaptive_reallocation_adversary": {
+      "value": 0.99995,
+      "source_file": "soundness_theorem1.json",
+      "source_key": "H1_coverage.adaptive_reallocation_adversary.coverage",
+      "n_seeds": 20000,
+      "note": "pilot look, then budget moved to the lowest-p_hat half"
+    },
+    "H1_coverage_weighted_aggregate": {
+      "value": 1.0,
+      "source_file": "soundness_theorem1.json",
+      "source_key": "H1_coverage.weighted_aggregate.coverage",
+      "n_seeds": 20000
+    },
+    "H1_negative_control_legacy_fixed_m_coverage": {
+      "value": 0.86015,
+      "source_file": "soundness_theorem1.json",
+      "source_key": "negative_controls.legacy_fixed_m_width.coverage",
+      "note": "MUST be below 1-delta: the pre-rebuild width. correctly_fails=True"
+    },
+    "H1_negative_control_data_derived_k_coverage": {
+      "value": 0.0,
+      "source_file": "soundness_theorem1.json",
+      "source_key": "negative_controls.data_derived_k_dropping_empty_regions.coverage",
+      "note": "finding F10 reproduced; MUST be below 1-delta"
+    },
+    "H1_verdict": {
+      "value": "SUPPORTED",
+      "source_file": "soundness_theorem1.json",
+      "source_key": "H1_coverage.*.passes"
+    },
+    "H1_at_experiment_parameters_coverage": {
+      "value": 0.9999,
+      "source_file": "soundness_theorem1_at_experiment_params.json",
+      "source_key": "H1_coverage.optimal_stopping_adversary.coverage",
+      "note": "K=8, M=300, delta=0.05 -- the values the FL/verifier arms actually use"
+    },
+    "H1_at_experiment_parameters_negative_control_correctly_fails": {
+      "value": false,
+      "source_file": "soundness_theorem1_at_experiment_params.json",
+      "source_key": "negative_controls.legacy_fixed_m_width.correctly_fails",
+      "note": "if false, the MC experiment has no power to discriminate the anytime correction at these particular K and M; the discriminating run is soundness_theorem1.json"
+    },
+    "C2_max_pairwise_row_overlap": {
+      "value": 0,
+      "source_file": "verifier_arm.json",
+      "source_key": "per_seed_setup.42.split_overlaps.max_pairwise_overlap",
+      "note": "over every pair of client / search / estimation / test splits"
+    },
+    "C2_max_pairwise_prompt_group_overlap": {
+      "value": 0,
+      "source_file": "verifier_arm.json",
+      "source_key": "per_seed_setup.42.group_overlaps.max_group_overlap",
+      "note": "prompt-level: a prompt never straddles two splits"
+    },
+    "C2_duplicated_ids": {
+      "value": 0,
+      "source_file": "verifier_arm.json",
+      "source_key": "per_seed_setup.42.split_overlaps.duplicated_ids"
+    },
+    "model_parameter_count": {
+      "value": 100516,
+      "source_file": "verifier_arm.json",
+      "source_key": "per_seed_setup.<seed>.parameters.total",
+      "note": "counted programmatically; the pre-rebuild README claimed 3.3M for a 6,466,690-parameter model (F14)"
+    },
+    "verifier_bound__proportional_allocation": {
+      "value": 0.2816418336700531,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.bound.proportional_allocation.mean",
+      "ci95": {
+        "lo": 0.24007544322416655,
+        "hi": 0.32449206778243056
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.18967836463489382,
+        0.3020848603402681,
+        0.19478129797881447,
+        0.37381697210885667,
+        0.199751488167581,
+        0.2919538048754827,
+        0.3849772427747007,
+        0.3389412738327373,
+        0.2964483575060131,
+        0.24398467448118272
+      ],
+      "note": "mean certified bound; LOWER is tighter"
+    },
+    "verifier_bound__search_guided": {
+      "value": 0.28226768185901935,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.bound.search_guided.mean",
+      "ci95": {
+        "lo": 0.24087208178491773,
+        "hi": 0.32483198915377803
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.19253615642149163,
+        0.301940476496277,
+        0.19522096943515366,
+        0.37458104644135465,
+        0.19908336877779353,
+        0.2911319822125731,
+        0.3849772427747007,
+        0.3389412738327373,
+        0.29657272448089317,
+        0.24769157771721872
+      ],
+      "note": "mean certified bound; LOWER is tighter"
+    },
+    "verifier_bound__search_guided_identity_mutator": {
+      "value": 0.28182086742511386,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.bound.search_guided_identity_mutator.mean",
+      "ci95": {
+        "lo": 0.24049870006434315,
+        "hi": 0.324421442959151
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.1911665907759935,
+        0.3024040719103262,
+        0.19552229374824248,
+        0.3734960809508578,
+        0.199751488167581,
+        0.2905373318745801,
+        0.3849772427747007,
+        0.3389412738327373,
+        0.29661591756284345,
+        0.24479638265327633
+      ],
+      "note": "mean certified bound; LOWER is tighter"
+    },
+    "verifier_bound__search_guided_null_mutator": {
+      "value": 0.2821313675143994,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.bound.search_guided_null_mutator.mean",
+      "ci95": {
+        "lo": 0.24062661206918357,
+        "hi": 0.32481693152137286
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.1911665907759935,
+        0.30221006273874934,
+        0.19552229374824248,
+        0.37455619318994404,
+        0.199751488167581,
+        0.2923837427369673,
+        0.3849772427747007,
+        0.3389412738327373,
+        0.29672894952845447,
+        0.2450758376506234
+      ],
+      "note": "mean certified bound; LOWER is tighter"
+    },
+    "verifier_bound__uniform_allocation": {
+      "value": 0.28530446730396264,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.bound.uniform_allocation.mean",
+      "ci95": {
+        "lo": 0.24287011375327708,
+        "hi": 0.3292896503696736
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.19011387771966967,
+        0.30390076651487086,
+        0.20059911228530308,
+        0.3813415093001804,
+        0.20500052390950405,
+        0.29419141789332637,
+        0.39467790677832604,
+        0.3434287694885715,
+        0.2970267643347067,
+        0.2427640248151676
+      ],
+      "note": "mean certified bound; LOWER is tighter"
+    },
+    "verifier_bound__w23_allocation": {
+      "value": 0.28150101686760276,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.bound.w23_allocation.mean",
+      "ci95": {
+        "lo": 0.23966937916687753,
+        "hi": 0.32452144042509595
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.187486517515488,
+        0.3022309327744836,
+        0.1946754701158223,
+        0.3749212242985136,
+        0.1993031332213241,
+        0.2904067053913632,
+        0.3849772427747007,
+        0.3389412738327373,
+        0.29777612836710604,
+        0.24429154038448897
+      ],
+      "note": "mean certified bound; LOWER is tighter"
+    },
+    "H2_search_guided_vs_w23": {
+      "value": 0.000766664991416588,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.H2_search_guided_vs_w23.mean_difference_a_minus_b",
+      "note": "search_guided minus w23_allocation; negative = ours is tighter. a_is_tighter=False, p=0.3359, min attainable p=0.0020"
+    },
+    "H2_search_guided_vs_uniform": {
+      "value": -0.0030367854449432907,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.H2_search_guided_vs_uniform.mean_difference_a_minus_b",
+      "note": "search_guided minus uniform_allocation; negative = ours is tighter. a_is_tighter=True, p=0.0605, min attainable p=0.0020"
+    },
+    "H2_search_guided_vs_proportional": {
+      "value": 0.0006258481889662715,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.H2_search_guided_vs_proportional.mean_difference_a_minus_b",
+      "note": "search_guided minus proportional_allocation; negative = ours is tighter. a_is_tighter=False, p=0.3047, min attainable p=0.0020"
+    },
+    "H2_verdict": {
+      "value": "NOT SUPPORTED",
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.H2_*",
+      "note": "SUPPORTED requires search-guided to be tighter than ALL of uniform / proportional / w^(2/3) and at least one comparison significant at p<0.05"
+    },
+    "amplification_raw__proportional_allocation": {
+      "value": 7.275141980717189,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.raw_mean_by_arm.proportional_allocation",
+      "note": "RAW: re-counts one failure many times; NOT quotable alone"
+    },
+    "discovery_violation_rate_over_distinct_sources__proportional_allocation": {
+      "value": 0.14,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.dedup_mean_by_arm.proportional_allocation",
+      "note": "distinct violating depth-0 ancestors divided by distinct depth-0 search seeds. run_all stores this under the key 'dedup_amplification'; it is a discovery RATE, not an amplification"
+    },
+    "amplification_raw__search_guided": {
+      "value": 7.275141980717189,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.raw_mean_by_arm.search_guided",
+      "note": "RAW: re-counts one failure many times; NOT quotable alone"
+    },
+    "discovery_violation_rate_over_distinct_sources__search_guided": {
+      "value": 0.14,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.dedup_mean_by_arm.search_guided",
+      "note": "distinct violating depth-0 ancestors divided by distinct depth-0 search seeds. run_all stores this under the key 'dedup_amplification'; it is a discovery RATE, not an amplification"
+    },
+    "amplification_raw__search_guided_identity_mutator": {
+      "value": 8.871919437388303,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.raw_mean_by_arm.search_guided_identity_mutator",
+      "note": "RAW: re-counts one failure many times; NOT quotable alone"
+    },
+    "discovery_violation_rate_over_distinct_sources__search_guided_identity_mutator": {
+      "value": 0.14,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.dedup_mean_by_arm.search_guided_identity_mutator",
+      "note": "distinct violating depth-0 ancestors divided by distinct depth-0 search seeds. run_all stores this under the key 'dedup_amplification'; it is a discovery RATE, not an amplification"
+    },
+    "amplification_raw__search_guided_null_mutator": {
+      "value": 8.68417599211579,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.raw_mean_by_arm.search_guided_null_mutator",
+      "note": "RAW: re-counts one failure many times; NOT quotable alone"
+    },
+    "discovery_violation_rate_over_distinct_sources__search_guided_null_mutator": {
+      "value": 0.14,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.dedup_mean_by_arm.search_guided_null_mutator",
+      "note": "distinct violating depth-0 ancestors divided by distinct depth-0 search seeds. run_all stores this under the key 'dedup_amplification'; it is a discovery RATE, not an amplification"
+    },
+    "amplification_raw__uniform_allocation": {
+      "value": 7.275141980717189,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.raw_mean_by_arm.uniform_allocation",
+      "note": "RAW: re-counts one failure many times; NOT quotable alone"
+    },
+    "discovery_violation_rate_over_distinct_sources__uniform_allocation": {
+      "value": 0.14,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.dedup_mean_by_arm.uniform_allocation",
+      "note": "distinct violating depth-0 ancestors divided by distinct depth-0 search seeds. run_all stores this under the key 'dedup_amplification'; it is a discovery RATE, not an amplification"
+    },
+    "amplification_raw__w23_allocation": {
+      "value": 7.275141980717189,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.raw_mean_by_arm.w23_allocation",
+      "note": "RAW: re-counts one failure many times; NOT quotable alone"
+    },
+    "discovery_violation_rate_over_distinct_sources__w23_allocation": {
+      "value": 0.14,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.dedup_mean_by_arm.w23_allocation",
+      "note": "distinct violating depth-0 ancestors divided by distinct depth-0 search seeds. run_all stores this under the key 'dedup_amplification'; it is a discovery RATE, not an amplification"
+    },
+    "F8_null_mutator_raw_beats_real_operators": {
+      "value": true,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.null_mutator_raw_beats_real"
+    },
+    "F8_identity_mutator_raw_beats_real_operators": {
+      "value": true,
+      "source_file": "verifier_arm.json",
+      "source_key": "hypotheses.F8_amplification.identity_mutator_raw_beats_real"
+    },
+    "F8_deduplicated_amplification": {
+      "value": 1.0,
+      "source_file": "verifier_arm.json",
+      "source_key": "definition",
+      "note": "1.00 BY CONSTRUCTION: once violations are deduplicated to distinct depth-0 ancestors, each failing input is counted exactly once, so there is no amplification left to report. Any 'Nx recursive amplification' headline is a statement about how many times the recursion re-queried the same failure, which the IDENTITY mutator maximises."
+    },
+    "F8_mutator_control_caveat": {
+      "value": "structural",
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.<arm>.values",
+      "note": "The deduplicated violation counts are IDENTICAL across all six arms, including the identity mutator. This is forced by the search design, not an empirical coincidence: rlm_verifier's Phase 2 expands only ALREADY-VIOLATING traces, so a mutation can never turn a non-violating depth-0 seed into a violating one, and the deduplicated count is fully determined by the flat Phase-1 seeds. The informative comparison is therefore the RAW count, where the identity mutator wins."
+    },
+    "total_violations_raw__proportional_allocation": {
+      "value": 121.7,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.total_violations_raw.proportional_allocation.mean",
+      "ci95": {
+        "lo": 108.5,
+        "hi": 134.30249999999998
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        85.0,
+        126.0,
+        116.0,
+        151.0,
+        92.0,
+        107.0,
+        143.0,
+        143.0,
+        125.0,
+        129.0
+      ]
+    },
+    "total_violations_raw__search_guided": {
+      "value": 121.7,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.total_violations_raw.search_guided.mean",
+      "ci95": {
+        "lo": 108.5,
+        "hi": 134.30249999999998
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        85.0,
+        126.0,
+        116.0,
+        151.0,
+        92.0,
+        107.0,
+        143.0,
+        143.0,
+        125.0,
+        129.0
+      ]
+    },
+    "total_violations_raw__search_guided_identity_mutator": {
+      "value": 142.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.total_violations_raw.search_guided_identity_mutator.mean",
+      "ci95": {
+        "lo": 135.5,
+        "hi": 149.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        126.0,
+        145.0,
+        127.0,
+        163.0,
+        134.0,
+        140.0,
+        151.0,
+        157.0,
+        145.0,
+        136.0
+      ]
+    },
+    "total_violations_raw__search_guided_null_mutator": {
+      "value": 138.7,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.total_violations_raw.search_guided_null_mutator.mean",
+      "ci95": {
+        "lo": 131.6,
+        "hi": 146.5
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        126.0,
+        142.0,
+        127.0,
+        159.0,
+        125.0,
+        135.0,
+        151.0,
+        155.0,
+        138.0,
+        129.0
+      ]
+    },
+    "total_violations_raw__uniform_allocation": {
+      "value": 121.7,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.total_violations_raw.uniform_allocation.mean",
+      "ci95": {
+        "lo": 108.5,
+        "hi": 134.30249999999998
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        85.0,
+        126.0,
+        116.0,
+        151.0,
+        92.0,
+        107.0,
+        143.0,
+        143.0,
+        125.0,
+        129.0
+      ]
+    },
+    "total_violations_raw__w23_allocation": {
+      "value": 121.7,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.total_violations_raw.w23_allocation.mean",
+      "ci95": {
+        "lo": 108.5,
+        "hi": 134.30249999999998
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        85.0,
+        126.0,
+        116.0,
+        151.0,
+        92.0,
+        107.0,
+        143.0,
+        143.0,
+        125.0,
+        129.0
+      ]
+    },
+    "distinct_violations_dedup_depth0__proportional_allocation": {
+      "value": 22.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.proportional_allocation.mean",
+      "ci95": {
+        "lo": 15.5,
+        "hi": 29.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        6.0,
+        25.0,
+        7.0,
+        43.0,
+        14.0,
+        20.0,
+        31.0,
+        37.0,
+        25.0,
+        16.0
+      ]
+    },
+    "distinct_violations_dedup_depth0__search_guided": {
+      "value": 22.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.search_guided.mean",
+      "ci95": {
+        "lo": 15.5,
+        "hi": 29.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        6.0,
+        25.0,
+        7.0,
+        43.0,
+        14.0,
+        20.0,
+        31.0,
+        37.0,
+        25.0,
+        16.0
+      ]
+    },
+    "distinct_violations_dedup_depth0__search_guided_identity_mutator": {
+      "value": 22.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.search_guided_identity_mutator.mean",
+      "ci95": {
+        "lo": 15.5,
+        "hi": 29.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        6.0,
+        25.0,
+        7.0,
+        43.0,
+        14.0,
+        20.0,
+        31.0,
+        37.0,
+        25.0,
+        16.0
+      ]
+    },
+    "distinct_violations_dedup_depth0__search_guided_null_mutator": {
+      "value": 22.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.search_guided_null_mutator.mean",
+      "ci95": {
+        "lo": 15.5,
+        "hi": 29.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        6.0,
+        25.0,
+        7.0,
+        43.0,
+        14.0,
+        20.0,
+        31.0,
+        37.0,
+        25.0,
+        16.0
+      ]
+    },
+    "distinct_violations_dedup_depth0__uniform_allocation": {
+      "value": 22.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.uniform_allocation.mean",
+      "ci95": {
+        "lo": 15.5,
+        "hi": 29.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        6.0,
+        25.0,
+        7.0,
+        43.0,
+        14.0,
+        20.0,
+        31.0,
+        37.0,
+        25.0,
+        16.0
+      ]
+    },
+    "distinct_violations_dedup_depth0__w23_allocation": {
+      "value": 22.4,
+      "source_file": "verifier_arm.json",
+      "source_key": "summary.distinct_violations_dedup_depth0.w23_allocation.mean",
+      "ci95": {
+        "lo": 15.5,
+        "hi": 29.9
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        6.0,
+        25.0,
+        7.0,
+        43.0,
+        14.0,
+        20.0,
+        31.0,
+        37.0,
+        25.0,
+        16.0
+      ]
+    },
+    "F4_mkg_edge_density": {
+      "value": 0.24523809523809528,
+      "source_file": "verifier_arm.json",
+      "source_key": "rows[*].mkg_edge_density",
+      "note": "1.0 would mean the complete graph, which is what the pre-rebuild tau=1.0 produced (F4). tau is now auto-calibrated."
+    },
+    "heldout_accuracy__always_accept_gate": {
+      "value": 0.5821875000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.always_accept_gate.mean",
+      "ci95": {
+        "lo": 0.5379343750000001,
+        "hi": 0.6287499999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.47125,
+        0.525,
+        0.6575,
+        0.620625,
+        0.53125,
+        0.70375,
+        0.563125,
+        0.68125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__always_reject_gate": {
+      "value": 0.5781875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.always_reject_gate.mean",
+      "ci95": {
+        "lo": 0.5723125,
+        "hi": 0.584
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.56125,
+        0.58,
+        0.56875,
+        0.580625,
+        0.590625,
+        0.591875,
+        0.570625,
+        0.58125,
+        0.570625,
+        0.58625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__clean_fedavg_no_attack_no_gate": {
+      "value": 0.6301875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_fedavg_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.5935625000000001,
+        "hi": 0.6654390625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.55375,
+        0.540625,
+        0.72,
+        0.59375,
+        0.700625,
+        0.66,
+        0.598125,
+        0.6525,
+        0.60375,
+        0.67875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__clean_fedavg_no_gate": {
+      "value": 0.6301875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_fedavg_no_gate.mean",
+      "ci95": {
+        "lo": 0.5935625000000001,
+        "hi": 0.6654390625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.55375,
+        0.540625,
+        0.72,
+        0.59375,
+        0.700625,
+        0.66,
+        0.598125,
+        0.6525,
+        0.60375,
+        0.67875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__clean_fltrust_no_attack_no_gate": {
+      "value": 0.537625,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_fltrust_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.495375,
+        "hi": 0.5835640624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.580625,
+        0.661875,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.46875,
+        0.46875,
+        0.629375,
+        0.57625,
+        0.575
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__clean_krum_no_attack_no_gate": {
+      "value": 0.5765,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_krum_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.5309984375,
+        "hi": 0.6215015625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5825,
+        0.515,
+        0.47125,
+        0.616875,
+        0.670625,
+        0.606875,
+        0.46875,
+        0.531875,
+        0.604375,
+        0.696875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__clean_median_no_attack_no_gate": {
+      "value": 0.5344374999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_median_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.504125,
+        "hi": 0.5641875000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.586875,
+        0.575,
+        0.47125,
+        0.48125,
+        0.5925,
+        0.46875,
+        0.508125,
+        0.5575,
+        0.589375,
+        0.51375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__clean_trimmed_mean_no_attack_no_gate": {
+      "value": 0.5941875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_trimmed_mean_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.5658125,
+        "hi": 0.6265625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.585625,
+        0.55625,
+        0.55625,
+        0.67,
+        0.691875,
+        0.535,
+        0.6225,
+        0.548125,
+        0.60375,
+        0.5725
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|alie|certified_gate": {
+      "value": 0.6015,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|alie|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5744374999999999,
+        "hi": 0.62625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.528125,
+        0.540625,
+        0.643125,
+        0.5675,
+        0.618125,
+        0.620625,
+        0.6125,
+        0.658125,
+        0.586875,
+        0.639375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|alie|no_gate": {
+      "value": 0.6055625,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|alie|no_gate.mean",
+      "ci95": {
+        "lo": 0.5693734374999999,
+        "hi": 0.6435
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.528125,
+        0.540625,
+        0.5325,
+        0.574375,
+        0.665,
+        0.621875,
+        0.61375,
+        0.69625,
+        0.590625,
+        0.6925
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|ipm|certified_gate": {
+      "value": 0.5784374999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|ipm|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5505625000000001,
+        "hi": 0.6070015625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.536875,
+        0.540625,
+        0.640625,
+        0.53875,
+        0.644375,
+        0.614375,
+        0.53125,
+        0.625,
+        0.5775,
+        0.535
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|ipm|no_gate": {
+      "value": 0.5781875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|ipm|no_gate.mean",
+      "ci95": {
+        "lo": 0.550875,
+        "hi": 0.6085625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.536875,
+        0.540625,
+        0.575625,
+        0.54,
+        0.66875,
+        0.626875,
+        0.53125,
+        0.634375,
+        0.578125,
+        0.549375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|legacy_gaussian|certified_gate": {
+      "value": 0.5875000000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|legacy_gaussian|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5589359375,
+        "hi": 0.6168140625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.534375,
+        0.540625,
+        0.6525,
+        0.545625,
+        0.660625,
+        0.62,
+        0.54,
+        0.631875,
+        0.5775,
+        0.571875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|legacy_gaussian|no_gate": {
+      "value": 0.5861249999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|legacy_gaussian|no_gate.mean",
+      "ci95": {
+        "lo": 0.556125,
+        "hi": 0.6198765625000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.534375,
+        0.540625,
+        0.559375,
+        0.545,
+        0.688125,
+        0.6275,
+        0.540625,
+        0.658125,
+        0.58125,
+        0.58625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|sign_flip|certified_gate": {
+      "value": 0.5865625000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|sign_flip|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5539984375,
+        "hi": 0.6201265625000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.599375,
+        0.52375,
+        0.639375,
+        0.6175,
+        0.53125,
+        0.68,
+        0.563125,
+        0.643125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|sign_flip|no_gate": {
+      "value": 0.5821875000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|sign_flip|no_gate.mean",
+      "ci95": {
+        "lo": 0.5379343750000001,
+        "hi": 0.6287499999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.47125,
+        0.525,
+        0.6575,
+        0.620625,
+        0.53125,
+        0.70375,
+        0.563125,
+        0.68125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|targeted_safety|certified_gate": {
+      "value": 0.5988749999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|targeted_safety|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5811859374999998,
+        "hi": 0.618625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5775,
+        0.58,
+        0.56875,
+        0.62625,
+        0.590625,
+        0.60125,
+        0.5725,
+        0.646875,
+        0.570625,
+        0.654375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fedavg|targeted_safety|no_gate": {
+      "value": 0.563625,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|targeted_safety|no_gate.mean",
+      "ci95": {
+        "lo": 0.5016859375,
+        "hi": 0.6238140624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5925,
+        0.40375,
+        0.47125,
+        0.65875,
+        0.463125,
+        0.650625,
+        0.579375,
+        0.645625,
+        0.465625,
+        0.705625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|alie|certified_gate": {
+      "value": 0.5707500000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|alie|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5530625,
+        "hi": 0.5896250000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.536875,
+        0.5525,
+        0.626875,
+        0.609375,
+        0.56375,
+        0.53125,
+        0.573125,
+        0.59125,
+        0.57625,
+        0.54625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|alie|no_gate": {
+      "value": 0.520125,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|alie|no_gate.mean",
+      "ci95": {
+        "lo": 0.4843734375,
+        "hi": 0.5614375
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5775,
+        0.459375,
+        0.47125,
+        0.48125,
+        0.469375,
+        0.46875,
+        0.4925,
+        0.66125,
+        0.575,
+        0.545
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|ipm|certified_gate": {
+      "value": 0.5778125,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|ipm|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5582484375,
+        "hi": 0.59925
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.545625,
+        0.563125,
+        0.645,
+        0.606875,
+        0.566875,
+        0.57,
+        0.579375,
+        0.615625,
+        0.534375,
+        0.55125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|ipm|no_gate": {
+      "value": 0.5349375000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|ipm|no_gate.mean",
+      "ci95": {
+        "lo": 0.4937484374999999,
+        "hi": 0.579
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.586875,
+        0.605,
+        0.47125,
+        0.48125,
+        0.464375,
+        0.46875,
+        0.4725,
+        0.6725,
+        0.565625,
+        0.56125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|legacy_gaussian|certified_gate": {
+      "value": 0.57775,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|legacy_gaussian|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5581875000000001,
+        "hi": 0.599
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.545625,
+        0.5625,
+        0.644375,
+        0.60625,
+        0.56875,
+        0.57,
+        0.579375,
+        0.615,
+        0.534375,
+        0.55125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|legacy_gaussian|no_gate": {
+      "value": 0.5204375000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|legacy_gaussian|no_gate.mean",
+      "ci95": {
+        "lo": 0.48106250000000006,
+        "hi": 0.5641890624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.586875,
+        0.460625,
+        0.47125,
+        0.48125,
+        0.464375,
+        0.46875,
+        0.473125,
+        0.67125,
+        0.565625,
+        0.56125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|sign_flip|certified_gate": {
+      "value": 0.5791875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|sign_flip|certified_gate.mean",
+      "ci95": {
+        "lo": 0.55825,
+        "hi": 0.6013749999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.540625,
+        0.563125,
+        0.645,
+        0.60375,
+        0.565,
+        0.5725,
+        0.605625,
+        0.61375,
+        0.534375,
+        0.548125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|sign_flip|no_gate": {
+      "value": 0.5204375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|sign_flip|no_gate.mean",
+      "ci95": {
+        "lo": 0.4833125000000001,
+        "hi": 0.56325
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.585,
+        0.483125,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.46875,
+        0.46875,
+        0.66875,
+        0.564375,
+        0.55
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|targeted_safety|certified_gate": {
+      "value": 0.5615,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|targeted_safety|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5450625,
+        "hi": 0.5783765625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.554375,
+        0.564375,
+        0.574375,
+        0.51875,
+        0.575625,
+        0.53125,
+        0.563125,
+        0.615625,
+        0.534375,
+        0.583125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__fltrust|targeted_safety|no_gate": {
+      "value": 0.5355625000000002,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fltrust|targeted_safety|no_gate.mean",
+      "ci95": {
+        "lo": 0.49368593749999995,
+        "hi": 0.5789390624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.586875,
+        0.585,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.46875,
+        0.46875,
+        0.669375,
+        0.571875,
+        0.589375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__frozen_pretrained": {
+      "value": 0.5781875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.frozen_pretrained.mean",
+      "ci95": {
+        "lo": 0.5723125,
+        "hi": 0.584
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.56125,
+        0.58,
+        0.56875,
+        0.580625,
+        0.590625,
+        0.591875,
+        0.570625,
+        0.58125,
+        0.570625,
+        0.58625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|alie|certified_gate": {
+      "value": 0.5646875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|alie|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5375624999999999,
+        "hi": 0.5945640624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.5675,
+        0.599375,
+        0.51875,
+        0.651875,
+        0.53125,
+        0.53125,
+        0.613125,
+        0.595,
+        0.51125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|alie|no_gate": {
+      "value": 0.585375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|alie|no_gate.mean",
+      "ci95": {
+        "lo": 0.5295609374999999,
+        "hi": 0.645
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.591875,
+        0.47125,
+        0.51875,
+        0.685,
+        0.53125,
+        0.46875,
+        0.719375,
+        0.604375,
+        0.735625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|ipm|certified_gate": {
+      "value": 0.5448124999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|ipm|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5305,
+        "hi": 0.5613124999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.58,
+        0.52875,
+        0.580625,
+        0.536875,
+        0.53625,
+        0.53125,
+        0.58125,
+        0.534375,
+        0.51125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|ipm|no_gate": {
+      "value": 0.4991250000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|ipm|no_gate.mean",
+      "ci95": {
+        "lo": 0.4743109374999999,
+        "hi": 0.5294375
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.459375,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.535625,
+        0.46875,
+        0.6075,
+        0.465625,
+        0.51125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|legacy_gaussian|certified_gate": {
+      "value": 0.5550625,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|legacy_gaussian|certified_gate.mean",
+      "ci95": {
+        "lo": 0.532625,
+        "hi": 0.5799390624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.5625,
+        0.51875,
+        0.62625,
+        0.53125,
+        0.53125,
+        0.60625,
+        0.595,
+        0.51125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|legacy_gaussian|no_gate": {
+      "value": 0.5604375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|legacy_gaussian|no_gate.mean",
+      "ci95": {
+        "lo": 0.5051875,
+        "hi": 0.6187515625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.459375,
+        0.47125,
+        0.48125,
+        0.6825,
+        0.53125,
+        0.46875,
+        0.675625,
+        0.6025,
+        0.704375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|sign_flip|certified_gate": {
+      "value": 0.5543125,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|sign_flip|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5354984375,
+        "hi": 0.5743750000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.52875,
+        0.51875,
+        0.6075,
+        0.53125,
+        0.53125,
+        0.58125,
+        0.59,
+        0.58625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|sign_flip|no_gate": {
+      "value": 0.5496875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|sign_flip|no_gate.mean",
+      "ci95": {
+        "lo": 0.4964984374999999,
+        "hi": 0.6093765624999998
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.459375,
+        0.47125,
+        0.51875,
+        0.671875,
+        0.53125,
+        0.46875,
+        0.663125,
+        0.465625,
+        0.719375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|targeted_safety|certified_gate": {
+      "value": 0.563375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|targeted_safety|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5446249999999999,
+        "hi": 0.582
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.56875,
+        0.56875,
+        0.580625,
+        0.620625,
+        0.53125,
+        0.573125,
+        0.58125,
+        0.570625,
+        0.51125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__krum|targeted_safety|no_gate": {
+      "value": 0.5546875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.krum|targeted_safety|no_gate.mean",
+      "ci95": {
+        "lo": 0.49725,
+        "hi": 0.619253125
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.459375,
+        0.47125,
+        0.51875,
+        0.685625,
+        0.53125,
+        0.46875,
+        0.6925,
+        0.465625,
+        0.72625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|alie|certified_gate": {
+      "value": 0.57575,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|alie|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5595000000000001,
+        "hi": 0.5920624999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5525,
+        0.55125,
+        0.555625,
+        0.614375,
+        0.609375,
+        0.5775,
+        0.53125,
+        0.605,
+        0.5825,
+        0.578125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|alie|no_gate": {
+      "value": 0.6199375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|alie|no_gate.mean",
+      "ci95": {
+        "lo": 0.5884375000000001,
+        "hi": 0.6527499999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5525,
+        0.55125,
+        0.6025,
+        0.62375,
+        0.67,
+        0.5775,
+        0.665,
+        0.651875,
+        0.588125,
+        0.716875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|ipm|certified_gate": {
+      "value": 0.577,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|ipm|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5594375,
+        "hi": 0.5925625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.581875,
+        0.58,
+        0.57875,
+        0.58375,
+        0.609375,
+        0.53125,
+        0.610625,
+        0.595,
+        0.575,
+        0.524375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|ipm|no_gate": {
+      "value": 0.50675,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|ipm|no_gate.mean",
+      "ci95": {
+        "lo": 0.47106250000000005,
+        "hi": 0.5505
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.4725,
+        0.459375,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.53125,
+        0.61125,
+        0.468125,
+        0.465625,
+        0.64375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|legacy_gaussian|certified_gate": {
+      "value": 0.579,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|legacy_gaussian|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5640609375,
+        "hi": 0.5930015625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.57125,
+        0.57125,
+        0.585,
+        0.59625,
+        0.596875,
+        0.53125,
+        0.611875,
+        0.603125,
+        0.575,
+        0.548125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|legacy_gaussian|no_gate": {
+      "value": 0.5413125000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|legacy_gaussian|no_gate.mean",
+      "ci95": {
+        "lo": 0.5103109375,
+        "hi": 0.5711265625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.57125,
+        0.57125,
+        0.47125,
+        0.481875,
+        0.5525,
+        0.53125,
+        0.61375,
+        0.469375,
+        0.56125,
+        0.589375
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|sign_flip|certified_gate": {
+      "value": 0.565375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|sign_flip|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5460609375,
+        "hi": 0.5837515624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.579375,
+        0.51875,
+        0.585625,
+        0.53125,
+        0.59625,
+        0.591875,
+        0.591875,
+        0.590625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|sign_flip|no_gate": {
+      "value": 0.5315624999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|sign_flip|no_gate.mean",
+      "ci95": {
+        "lo": 0.500875,
+        "hi": 0.5638749999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.47125,
+        0.618125,
+        0.483125,
+        0.53125,
+        0.596875,
+        0.468125,
+        0.59,
+        0.48875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|targeted_safety|certified_gate": {
+      "value": 0.5775624999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|targeted_safety|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5708125,
+        "hi": 0.5831875
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.584375,
+        0.58,
+        0.56875,
+        0.580625,
+        0.590625,
+        0.58,
+        0.553125,
+        0.58125,
+        0.570625,
+        0.58625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__median|targeted_safety|no_gate": {
+      "value": 0.47074999999999995,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.median|targeted_safety|no_gate.mean",
+      "ci95": {
+        "lo": 0.466,
+        "hi": 0.4761875000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.4725,
+        0.459375,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.46875,
+        0.46875,
+        0.468125,
+        0.465625,
+        0.48875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__no_gate": {
+      "value": 0.5821875000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.no_gate.mean",
+      "ci95": {
+        "lo": 0.5379343750000001,
+        "hi": 0.6287499999999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.47125,
+        0.525,
+        0.6575,
+        0.620625,
+        0.53125,
+        0.70375,
+        0.563125,
+        0.68125
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|alie|certified_gate": {
+      "value": 0.5839375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|alie|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5615625000000001,
+        "hi": 0.6054375000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5375,
+        0.540625,
+        0.576875,
+        0.610625,
+        0.62,
+        0.570625,
+        0.53125,
+        0.625,
+        0.594375,
+        0.6325
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|alie|no_gate": {
+      "value": 0.6032500000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|alie|no_gate.mean",
+      "ci95": {
+        "lo": 0.5605,
+        "hi": 0.6448750000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5375,
+        0.540625,
+        0.47125,
+        0.6225,
+        0.66375,
+        0.570625,
+        0.630625,
+        0.6875,
+        0.6075,
+        0.700625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|ipm|certified_gate": {
+      "value": 0.5738749999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|ipm|certified_gate.mean",
+      "ci95": {
+        "lo": 0.557,
+        "hi": 0.5899375
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.54,
+        0.57625,
+        0.586875,
+        0.5975,
+        0.59875,
+        0.53125,
+        0.58375,
+        0.613125,
+        0.574375,
+        0.536875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|ipm|no_gate": {
+      "value": 0.5231250000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|ipm|no_gate.mean",
+      "ci95": {
+        "lo": 0.49343750000000003,
+        "hi": 0.5526875
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.54,
+        0.58,
+        0.47125,
+        0.530625,
+        0.469375,
+        0.53125,
+        0.585,
+        0.469375,
+        0.465625,
+        0.58875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|legacy_gaussian|certified_gate": {
+      "value": 0.57575,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|legacy_gaussian|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5598750000000001,
+        "hi": 0.5918125
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.543125,
+        0.5425,
+        0.58,
+        0.586875,
+        0.61125,
+        0.54125,
+        0.601875,
+        0.608125,
+        0.58375,
+        0.55875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|legacy_gaussian|no_gate": {
+      "value": 0.5679375000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|legacy_gaussian|no_gate.mean",
+      "ci95": {
+        "lo": 0.5399359375,
+        "hi": 0.596
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.543125,
+        0.5425,
+        0.47125,
+        0.603125,
+        0.554375,
+        0.54125,
+        0.6025,
+        0.64875,
+        0.595625,
+        0.576875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|sign_flip|certified_gate": {
+      "value": 0.565125,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|sign_flip|certified_gate.mean",
+      "ci95": {
+        "lo": 0.5473125,
+        "hi": 0.5825
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.579375,
+        0.526875,
+        0.585625,
+        0.53125,
+        0.601875,
+        0.593125,
+        0.583125,
+        0.581875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|sign_flip|no_gate": {
+      "value": 0.5386875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|sign_flip|no_gate.mean",
+      "ci95": {
+        "lo": 0.5083734375,
+        "hi": 0.568375
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5275,
+        0.540625,
+        0.47125,
+        0.559375,
+        0.595,
+        0.53125,
+        0.61,
+        0.46875,
+        0.594375,
+        0.48875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|targeted_safety|certified_gate": {
+      "value": 0.5779375,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|targeted_safety|certified_gate.mean",
+      "ci95": {
+        "lo": 0.568875,
+        "hi": 0.585
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.585,
+        0.58,
+        0.56875,
+        0.580625,
+        0.590625,
+        0.591875,
+        0.544375,
+        0.58125,
+        0.570625,
+        0.58625
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "heldout_accuracy__trimmed_mean|targeted_safety|no_gate": {
+      "value": 0.48287499999999994,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.trimmed_mean|targeted_safety|no_gate.mean",
+      "ci95": {
+        "lo": 0.46668750000000003,
+        "hi": 0.508875
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.593125,
+        0.459375,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.46875,
+        0.46875,
+        0.46875,
+        0.465625,
+        0.48875
+      ],
+      "note": "held-out test accuracy; the gate never saw this split"
+    },
+    "C1_n_seeds_passing": {
+      "value": 8,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.C1_clean_fedavg_beats_frozen.n_seeds_passing",
+      "n_seeds": 10,
+      "note": "clean FedAvg (0 attackers, no gate) must EXCEED the frozen pretrained checkpoint on held-out test data"
+    },
+    "C1_mean_delta_fedavg_minus_frozen": {
+      "value": 0.052000000000000046,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_fedavg_no_gate.mean - summary.frozen_pretrained.mean"
+    },
+    "C1_verdict": {
+      "value": "PASS",
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.C1_clean_fedavg_beats_frozen",
+      "note": "PASS requires a strict majority of seeds"
+    },
+    "H3_n_configurations": {
+      "value": 25,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.n_configurations"
+    },
+    "H3_n_where_gate_helps": {
+      "value": 20,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.n_where_gate_helps"
+    },
+    "H3_n_where_gate_is_the_do_nothing_baseline": {
+      "value": 0,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.n_where_gate_is_the_do_nothing_baseline",
+      "note": "gated model byte-identical to the frozen checkpoint on every seed => the gate rejected every round and the comparison only shows FL was net-harmful (finding F5)"
+    },
+    "H3__fedavg|alie|certified_gate": {
+      "value": -0.004062499999999969,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fedavg|alie|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.6015 vs no-gate 0.6056, p=0.8594; seeds where gated == frozen: 0/10"
+    },
+    "H3__fedavg|ipm|certified_gate": {
+      "value": 0.00024999999999997247,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fedavg|ipm|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5784 vs no-gate 0.5782, p=1.0000; seeds where gated == frozen: 0/10"
+    },
+    "H3__fedavg|legacy_gaussian|certified_gate": {
+      "value": 0.0013750000000002371,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fedavg|legacy_gaussian|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5875 vs no-gate 0.5861, p=0.9922; seeds where gated == frozen: 0/10"
+    },
+    "H3__fedavg|sign_flip|certified_gate": {
+      "value": 0.004375000000000018,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fedavg|sign_flip|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5866 vs no-gate 0.5822, p=1.0000; seeds where gated == frozen: 0/10"
+    },
+    "H3__fedavg|targeted_safety|certified_gate": {
+      "value": 0.03524999999999989,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fedavg|targeted_safety|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5989 vs no-gate 0.5636, p=0.2109; seeds where gated == frozen: 4/10"
+    },
+    "H3__fltrust|alie|certified_gate": {
+      "value": 0.05062500000000014,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fltrust|alie|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5708 vs no-gate 0.5201, p=0.0645; seeds where gated == frozen: 0/10"
+    },
+    "H3__fltrust|ipm|certified_gate": {
+      "value": 0.042874999999999885,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fltrust|ipm|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5778 vs no-gate 0.5349, p=0.1504; seeds where gated == frozen: 0/10"
+    },
+    "H3__fltrust|legacy_gaussian|certified_gate": {
+      "value": 0.05731249999999988,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fltrust|legacy_gaussian|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5777 vs no-gate 0.5204, p=0.0586; seeds where gated == frozen: 0/10"
+    },
+    "H3__fltrust|sign_flip|certified_gate": {
+      "value": 0.05874999999999997,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fltrust|sign_flip|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5792 vs no-gate 0.5204, p=0.0547; seeds where gated == frozen: 0/10"
+    },
+    "H3__fltrust|targeted_safety|certified_gate": {
+      "value": 0.025937499999999836,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.fltrust|targeted_safety|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5615 vs no-gate 0.5356, p=0.2246; seeds where gated == frozen: 0/10"
+    },
+    "H3__krum|alie|certified_gate": {
+      "value": -0.02068749999999997,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.krum|alie|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5647 vs no-gate 0.5854, p=0.5312; seeds where gated == frozen: 0/10"
+    },
+    "H3__krum|ipm|certified_gate": {
+      "value": 0.045687499999999825,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.krum|ipm|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5448 vs no-gate 0.4991, p=0.0234; seeds where gated == frozen: 3/10"
+    },
+    "H3__krum|legacy_gaussian|certified_gate": {
+      "value": -0.005375000000000019,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.krum|legacy_gaussian|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5551 vs no-gate 0.5604, p=0.8672; seeds where gated == frozen: 0/10"
+    },
+    "H3__krum|sign_flip|certified_gate": {
+      "value": 0.00462499999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.krum|sign_flip|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5543 vs no-gate 0.5497, p=0.9219; seeds where gated == frozen: 2/10"
+    },
+    "H3__krum|targeted_safety|certified_gate": {
+      "value": 0.00868749999999996,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.krum|targeted_safety|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5634 vs no-gate 0.5547, p=0.8828; seeds where gated == frozen: 4/10"
+    },
+    "H3__median|alie|certified_gate": {
+      "value": -0.044187500000000046,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.median|alie|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5757 vs no-gate 0.6199, p=0.0156; seeds where gated == frozen: 0/10"
+    },
+    "H3__median|ipm|certified_gate": {
+      "value": 0.07024999999999992,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.median|ipm|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5770 vs no-gate 0.5068, p=0.0469; seeds where gated == frozen: 1/10"
+    },
+    "H3__median|legacy_gaussian|certified_gate": {
+      "value": 0.037687499999999874,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.median|legacy_gaussian|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5790 vs no-gate 0.5413, p=0.0938; seeds where gated == frozen: 0/10"
+    },
+    "H3__median|sign_flip|certified_gate": {
+      "value": 0.03381250000000002,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.median|sign_flip|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5654 vs no-gate 0.5316, p=0.0938; seeds where gated == frozen: 0/10"
+    },
+    "H3__median|targeted_safety|certified_gate": {
+      "value": 0.10681249999999992,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.median|targeted_safety|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5776 vs no-gate 0.4707, p=0.0020; seeds where gated == frozen: 7/10"
+    },
+    "H3__trimmed_mean|alie|certified_gate": {
+      "value": -0.019312500000000066,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.trimmed_mean|alie|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5839 vs no-gate 0.6033, p=0.2812; seeds where gated == frozen: 0/10"
+    },
+    "H3__trimmed_mean|ipm|certified_gate": {
+      "value": 0.05074999999999985,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.trimmed_mean|ipm|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5739 vs no-gate 0.5231, p=0.0625; seeds where gated == frozen: 0/10"
+    },
+    "H3__trimmed_mean|legacy_gaussian|certified_gate": {
+      "value": 0.007812499999999889,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.trimmed_mean|legacy_gaussian|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5757 vs no-gate 0.5679, p=0.6875; seeds where gated == frozen: 0/10"
+    },
+    "H3__trimmed_mean|sign_flip|certified_gate": {
+      "value": 0.026437500000000003,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.trimmed_mean|sign_flip|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5651 vs no-gate 0.5387, p=0.2500; seeds where gated == frozen: 0/10"
+    },
+    "H3__trimmed_mean|targeted_safety|certified_gate": {
+      "value": 0.09506250000000005,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.trimmed_mean|targeted_safety|certified_gate.difference",
+      "n_seeds": 10,
+      "note": "gate 0.5779 vs no-gate 0.4829, p=0.0039; seeds where gated == frozen: 8/10"
+    },
+    "H3_stratum__gate_never_inert_on_any_seed__mean_difference": {
+      "value": 0.016909722222222194,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.*.difference",
+      "n_seeds": 18,
+      "note": "regrouping of the per-configuration H3 rows; the gate helped in 13/18 of them. n_seeds here counts CONFIGURATIONS, not seeds",
+      "derived": true
+    },
+    "H3_stratum__gate_inert_on_at_least_one_seed__mean_difference": {
+      "value": 0.05233928571428565,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.H3_gate_improves_quality_under_attack.per_configuration.*.difference",
+      "n_seeds": 7,
+      "note": "regrouping of the per-configuration H3 rows; the gate helped in 7/7 of them. n_seeds here counts CONFIGURATIONS, not seeds",
+      "derived": true
+    },
+    "control_always_reject_equals_frozen": {
+      "value": true,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[arm=always_reject_gate].final_hash == rows[arm=frozen_pretrained].final_hash",
+      "n_seeds": 10,
+      "note": "parameter-hash identity, asserted in-run"
+    },
+    "control_always_accept_equals_no_gate": {
+      "value": true,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[arm=always_accept_gate].final_hash == rows[arm=no_gate].final_hash",
+      "n_seeds": 10,
+      "note": "parameter-hash identity, asserted in-run"
+    },
+    "attack_diagnostic__alie__mean_pairwise_cosine_attackers": {
+      "value": 0.9999999999999953,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=alie, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.mean_pairwise_cosine_attackers",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__alie__cosine_attacker_mean_vs_benign_mean": {
+      "value": 0.30014402984241134,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=alie, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.cosine_attacker_mean_vs_benign_mean",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__alie__norm_ratio": {
+      "value": 1.5176970642482168,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=alie, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.norm_ratio",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__alie__frac_within_benign_envelope": {
+      "value": 0.52,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=alie, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.frac_within_benign_envelope",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__ipm__mean_pairwise_cosine_attackers": {
+      "value": 0.9999999999999964,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=ipm, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.mean_pairwise_cosine_attackers",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__ipm__cosine_attacker_mean_vs_benign_mean": {
+      "value": -0.9999999999999964,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=ipm, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.cosine_attacker_mean_vs_benign_mean",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__ipm__norm_ratio": {
+      "value": 0.2329919307756815,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=ipm, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.norm_ratio",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__ipm__frac_within_benign_envelope": {
+      "value": 0.095,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=ipm, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.frac_within_benign_envelope",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__legacy_gaussian__mean_pairwise_cosine_attackers": {
+      "value": -9.36106884552501e-05,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=legacy_gaussian, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.mean_pairwise_cosine_attackers",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__legacy_gaussian__cosine_attacker_mean_vs_benign_mean": {
+      "value": -7.226898309559547e-05,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=legacy_gaussian, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.cosine_attacker_mean_vs_benign_mean",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__legacy_gaussian__norm_ratio": {
+      "value": 1.2384080616070423,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=legacy_gaussian, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.norm_ratio",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__legacy_gaussian__frac_within_benign_envelope": {
+      "value": 0.8150000000000001,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=legacy_gaussian, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.frac_within_benign_envelope",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__sign_flip__mean_pairwise_cosine_attackers": {
+      "value": 0.06587897866109743,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=sign_flip, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.mean_pairwise_cosine_attackers",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__sign_flip__cosine_attacker_mean_vs_benign_mean": {
+      "value": -0.3860301274492848,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=sign_flip, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.cosine_attacker_mean_vs_benign_mean",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__sign_flip__norm_ratio": {
+      "value": 0.9908457225587727,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=sign_flip, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.norm_ratio",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__sign_flip__frac_within_benign_envelope": {
+      "value": 0.8275,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=sign_flip, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.frac_within_benign_envelope",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__targeted_safety__mean_pairwise_cosine_attackers": {
+      "value": 0.9463763683858977,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=targeted_safety, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.mean_pairwise_cosine_attackers",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__targeted_safety__cosine_attacker_mean_vs_benign_mean": {
+      "value": -0.5595593603612974,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=targeted_safety, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.cosine_attacker_mean_vs_benign_mean",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__targeted_safety__norm_ratio": {
+      "value": 1.7046446442981185,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=targeted_safety, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.norm_ratio",
+      "n_seeds": 10
+    },
+    "attack_diagnostic__targeted_safety__frac_within_benign_envelope": {
+      "value": 1.0,
+      "source_file": "fl_arm.json",
+      "source_key": "rows[attack=targeted_safety, aggregator=fedavg, gate_on=false].mean_attack_diagnostics.frac_within_benign_envelope",
+      "n_seeds": 10
+    },
+    "attack_degrades_fedavg__alie": {
+      "value": -0.024625000000000008,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|alie|no_gate.mean - summary.clean_fedavg_no_gate.mean",
+      "ci95": {
+        "lo": 0.5693734374999999,
+        "hi": 0.6435
+      },
+      "n_seeds": 10,
+      "note": "NEGATIVE means the attack actually degrades undefended FedAvg. A POSITIVE value means the 'attack' helps and is not an attack (F6). paired permutation p=0.2422, minimum attainable p=0.0020",
+      "derived": true,
+      "p_value": 0.2421875,
+      "is_a_real_attack": true
+    },
+    "attack_degrades_fedavg__ipm": {
+      "value": -0.052000000000000046,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|ipm|no_gate.mean - summary.clean_fedavg_no_gate.mean",
+      "ci95": {
+        "lo": 0.550875,
+        "hi": 0.6085625
+      },
+      "n_seeds": 10,
+      "note": "NEGATIVE means the attack actually degrades undefended FedAvg. A POSITIVE value means the 'attack' helps and is not an attack (F6). paired permutation p=0.0039, minimum attainable p=0.0020",
+      "derived": true,
+      "p_value": 0.00390625,
+      "is_a_real_attack": true
+    },
+    "attack_degrades_fedavg__legacy_gaussian": {
+      "value": -0.044062500000000115,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|legacy_gaussian|no_gate.mean - summary.clean_fedavg_no_gate.mean",
+      "ci95": {
+        "lo": 0.556125,
+        "hi": 0.6198765625000001
+      },
+      "n_seeds": 10,
+      "note": "NEGATIVE means the attack actually degrades undefended FedAvg. A POSITIVE value means the 'attack' helps and is not an attack (F6). paired permutation p=0.0078, minimum attainable p=0.0020",
+      "derived": true,
+      "p_value": 0.0078125,
+      "is_a_real_attack": true
+    },
+    "attack_degrades_fedavg__sign_flip": {
+      "value": -0.04799999999999993,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|sign_flip|no_gate.mean - summary.clean_fedavg_no_gate.mean",
+      "ci95": {
+        "lo": 0.5379343750000001,
+        "hi": 0.6287499999999999
+      },
+      "n_seeds": 10,
+      "note": "NEGATIVE means the attack actually degrades undefended FedAvg. A POSITIVE value means the 'attack' helps and is not an attack (F6). paired permutation p=0.0469, minimum attainable p=0.0020",
+      "derived": true,
+      "p_value": 0.046875,
+      "is_a_real_attack": true
+    },
+    "attack_degrades_fedavg__targeted_safety": {
+      "value": -0.06656249999999997,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.fedavg|targeted_safety|no_gate.mean - summary.clean_fedavg_no_gate.mean",
+      "ci95": {
+        "lo": 0.5016859375,
+        "hi": 0.6238140624999999
+      },
+      "n_seeds": 10,
+      "note": "NEGATIVE means the attack actually degrades undefended FedAvg. A POSITIVE value means the 'attack' helps and is not an attack (F6). paired permutation p=0.1074, minimum attainable p=0.0020",
+      "derived": true,
+      "p_value": 0.107421875,
+      "is_a_real_attack": true
+    },
+    "zero_adversary__clean_fedavg_no_attack_no_gate": {
+      "value": 0.6301875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_fedavg_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.5935625000000001,
+        "hi": 0.6654390625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.55375,
+        0.540625,
+        0.72,
+        0.59375,
+        0.700625,
+        0.66,
+        0.598125,
+        0.6525,
+        0.60375,
+        0.67875
+      ],
+      "note": "ZERO Byzantine clients. delta vs the frozen checkpoint: +0.0520. A robust aggregator that lands below the frozen checkpoint here is paying a robustness cost with nothing to be robust against (finding F7)."
+    },
+    "zero_adversary__clean_fltrust_no_attack_no_gate": {
+      "value": 0.537625,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_fltrust_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.495375,
+        "hi": 0.5835640624999999
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.580625,
+        0.661875,
+        0.47125,
+        0.48125,
+        0.463125,
+        0.46875,
+        0.46875,
+        0.629375,
+        0.57625,
+        0.575
+      ],
+      "note": "ZERO Byzantine clients. delta vs the frozen checkpoint: -0.0406. A robust aggregator that lands below the frozen checkpoint here is paying a robustness cost with nothing to be robust against (finding F7)."
+    },
+    "zero_adversary__clean_krum_no_attack_no_gate": {
+      "value": 0.5765,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_krum_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.5309984375,
+        "hi": 0.6215015625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.5825,
+        0.515,
+        0.47125,
+        0.616875,
+        0.670625,
+        0.606875,
+        0.46875,
+        0.531875,
+        0.604375,
+        0.696875
+      ],
+      "note": "ZERO Byzantine clients. delta vs the frozen checkpoint: -0.0017. A robust aggregator that lands below the frozen checkpoint here is paying a robustness cost with nothing to be robust against (finding F7)."
+    },
+    "zero_adversary__clean_median_no_attack_no_gate": {
+      "value": 0.5344374999999999,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_median_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.504125,
+        "hi": 0.5641875000000001
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.586875,
+        0.575,
+        0.47125,
+        0.48125,
+        0.5925,
+        0.46875,
+        0.508125,
+        0.5575,
+        0.589375,
+        0.51375
+      ],
+      "note": "ZERO Byzantine clients. delta vs the frozen checkpoint: -0.0438. A robust aggregator that lands below the frozen checkpoint here is paying a robustness cost with nothing to be robust against (finding F7)."
+    },
+    "zero_adversary__clean_trimmed_mean_no_attack_no_gate": {
+      "value": 0.5941875,
+      "source_file": "fl_arm.json",
+      "source_key": "summary.clean_trimmed_mean_no_attack_no_gate.mean",
+      "ci95": {
+        "lo": 0.5658125,
+        "hi": 0.6265625
+      },
+      "n_seeds": 10,
+      "per_seed_values": [
+        0.585625,
+        0.55625,
+        0.55625,
+        0.67,
+        0.691875,
+        0.535,
+        0.6225,
+        0.548125,
+        0.60375,
+        0.5725
+      ],
+      "note": "ZERO Byzantine clients. delta vs the frozen checkpoint: +0.0160. A robust aggregator that lands below the frozen checkpoint here is paying a robustness cost with nothing to be robust against (finding F7)."
+    },
+    "F7_n_arms_with_any_constant_predictor_collapse": {
+      "value": 57,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.n_arms_with_any_collapse",
+      "n_seeds": 60,
+      "note": "an arm 'collapsed' on a seed when it predicted one class on more than 97% of the held-out set, i.e. reported a class prior rather than an accuracy (finding F7)"
+    },
+    "F7_collapse__clean_fedavg_no_attack_no_gate": {
+      "value": 1,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.per_arm.clean_fedavg_no_attack_no_gate.n_collapsed",
+      "n_seeds": 10,
+      "note": "ZERO adversaries: a robust aggregator that collapses here is not being robust"
+    },
+    "F7_collapse__clean_fedavg_no_gate": {
+      "value": 1,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.per_arm.clean_fedavg_no_gate.n_collapsed",
+      "n_seeds": 10,
+      "note": "ZERO adversaries: a robust aggregator that collapses here is not being robust"
+    },
+    "F7_collapse__clean_fltrust_no_attack_no_gate": {
+      "value": 5,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.per_arm.clean_fltrust_no_attack_no_gate.n_collapsed",
+      "n_seeds": 10,
+      "note": "ZERO adversaries: a robust aggregator that collapses here is not being robust"
+    },
+    "F7_collapse__clean_krum_no_attack_no_gate": {
+      "value": 3,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.per_arm.clean_krum_no_attack_no_gate.n_collapsed",
+      "n_seeds": 10,
+      "note": "ZERO adversaries: a robust aggregator that collapses here is not being robust"
+    },
+    "F7_collapse__clean_median_no_attack_no_gate": {
+      "value": 4,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.per_arm.clean_median_no_attack_no_gate.n_collapsed",
+      "n_seeds": 10,
+      "note": "ZERO adversaries: a robust aggregator that collapses here is not being robust"
+    },
+    "F7_collapse__clean_trimmed_mean_no_attack_no_gate": {
+      "value": 1,
+      "source_file": "fl_arm.json",
+      "source_key": "hypotheses.F7_constant_predictor_collapse.per_arm.clean_trimmed_mean_no_attack_no_gate.n_collapsed",
+      "n_seeds": 10,
+      "note": "ZERO adversaries: a robust aggregator that collapses here is not being robust"
+    },
+    "C4_byte_identical_across_processes_smoke_pipeline": {
+      "value": true,
+      "source_file": "reproducibility_c4.json",
+      "source_key": "reproducible",
+      "note": "artifacts: /tmp/sca-c4-lkeztrn2 | wrapped command: python -m sca.experiments.run_all --smoke"
+    },
+    "C4_byte_identical_across_processes_full_config": {
+      "value": true,
+      "source_file": "reproducibility_c4_full_config.json",
+      "source_key": "reproducible",
+      "note": "artifacts: /tmp/sca-c4-owk79cs_ | wrapped command: python -m sca.experiments.run_all --arms verifier --seeds 1 -- the PRODUCTION config, not the smoke config"
+    }
+  }
+}

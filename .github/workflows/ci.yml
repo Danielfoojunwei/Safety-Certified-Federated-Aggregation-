@@ -1,0 +1,405 @@
+# =============================================================================
+# CI for SCA.
+#
+# The pre-rebuild repository had no CI at all, which is why a 100% train/test
+# leak (F1), a certificate that read the labels it was scored on (F2), and
+# results that were a per-process random variable (F9) all survived to a
+# written-up paper while 105 tests passed.
+#
+# Five jobs:
+#   packaging        `pip install -e .` actually works, from a clean venv.
+#   tests            fast suite on a version matrix, every push and PR.
+#   coverage         full suite with a hard coverage floor.
+#   reproducibility  THE F9 JOB. Same command in N fresh processes, byte-diff
+#                    the outputs, fail on any difference. PYTHONHASHSEED is
+#                    deliberately left UNSET so hash randomisation is active.
+#   smoke            fast end-to-end run of the experiment pipeline.
+#
+# PYTHONHASHSEED is not set anywhere in this file, on purpose. Setting it would
+# make the reproducibility job pass while the defect it exists to catch is
+# live. See sca/utils/seeding.py.
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_full_suite:
+        description: "Run the slow suite and the full experiment sweep"
+        type: boolean
+        default: false
+  schedule:
+    # Nightly full run: the slow suite, including the Monte Carlo coverage
+    # check for Theorem 1, which is too expensive for every push.
+    - cron: "0 4 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Single-threaded BLAS: keeps runners honest about float reductions (a
+  # thread-count-dependent reduction order is itself a reproducibility bug)
+  # and stops oversubscription on 2-core runners.
+  OMP_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  TOKENIZERS_PARALLELISM: "false"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  # Never hit the network from CI by accident; network-marked tests are opt-in.
+  HF_HUB_DISABLE_TELEMETRY: "1"
+
+jobs:
+  # ==========================================================================
+  packaging:
+    name: packaging (pip install -e .)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Editable install from a clean environment
+        # The pre-rebuild pyproject.toml declared no package discovery under a
+        # flat layout with results/ beside sca/. Modern setuptools refuses:
+        #   "Multiple top-level packages discovered in a flat-layout:
+        #    ['sca', 'results']"
+        # so `pip install -e .` failed outright. This step is the regression
+        # test for that.
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e '.[dev]'
+
+      - name: Import and report version
+        run: |
+          cd "$(mktemp -d)"   # prove it is importable from outside the repo
+          python -c "import sca; print('sca', sca.__version__)"
+          python -c "import sca.utils.seeding, sca.utils.paths, sca.utils.stats"
+
+      - name: Package must not ship tests/ or results/
+        # This MUST run from outside the repo. Python puts the script's
+        # directory (here, the checkout root) at the front of sys.path, so
+        # running it in place resolves ./tests/__init__.py and reports a leak
+        # that does not exist -- it would be measuring the working directory,
+        # not the install. The `cd` is what makes the check test packaging.
+        run: |
+          cd "$(mktemp -d)"
+          python - <<'PY'
+          import importlib.util, sys, pathlib
+          # Guard the guard: if sca itself is not importable here, the check
+          # below is vacuous and would pass no matter what the install did.
+          spec = importlib.util.find_spec("sca")
+          if spec is None:
+              sys.exit("FAIL: sca is not importable outside the repo; this check would be vacuous")
+          print("sca resolved from", pathlib.Path(spec.origin).parent)
+          for leaked in ("tests", "results"):
+              found = importlib.util.find_spec(leaked)
+              if found is not None:
+                  sys.exit(f"FAIL: '{leaked}' was installed as a top-level package (origin: {found.origin})")
+          print("ok: only sca is installed")
+          PY
+
+      - name: Build an sdist and a wheel
+        run: |
+          pip install build
+          python -m build
+          ls -l dist/
+
+      - name: Declared dependencies must match what is importable
+        run: |
+          pip check
+
+  # ==========================================================================
+  tests:
+    name: tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Confirm PYTHONHASHSEED is NOT set
+        # If a future edit pins it, the reproducibility job silently stops
+        # testing anything. Fail here instead.
+        run: |
+          if [ -n "${PYTHONHASHSEED:-}" ]; then
+            echo "PYTHONHASHSEED is set to '$PYTHONHASHSEED'."
+            echo "CI must run with hash randomisation ACTIVE, otherwise the"
+            echo "reproducibility job cannot detect audit finding F9."
+            exit 1
+          fi
+          echo "ok: PYTHONHASHSEED unset, hash randomisation active"
+
+      - name: Fast suite
+        run: pytest -q --durations=15
+
+      - name: Slow suite
+        if: >-
+          github.event_name == 'schedule' ||
+          inputs.run_full_suite == true
+        run: pytest -q --runslow --durations=25
+
+  # ==========================================================================
+  coverage:
+    name: coverage (floor 75%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Run with coverage and enforce the floor
+        # 75% is the floor, measured against 78% actually achieved by the
+        # rebuilt fast suite over sca/ (legacy pre-rebuild entry points are
+        # omitted in pyproject.toml [tool.coverage.run]). It is a real gate,
+        # not decoration: the pre-rebuild suite covered 0% of every module
+        # that produced a paper number (F13). Raise it as coverage improves;
+        # do not lower it to make a build green.
+        run: |
+          pytest -q --runslow \
+            --cov=sca --cov-branch \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=75
+
+      - name: Modules that produce a paper number must not be at 0%
+        # Direct answer to F13: 105 tests passed while nine result-producing
+        # modules could be replaced by `raise RuntimeError` with no failure.
+        # A module at 0% is exactly that condition.
+        run: |
+          python - <<'PY'
+          import sys, posixpath, xml.etree.ElementTree as ET
+
+          CRITICAL = {
+              "sca/utils/stats.py",
+              "sca/utils/seeding.py",
+              "sca/knowledge_graph/regions.py",
+              "sca/knowledge_graph/mkg.py",
+              "sca/verifier/rlm_verifier.py",
+              "sca/certificate/acceptance.py",
+              "sca/federated/aggregation.py",
+              "sca/experiments/data.py",
+              "sca/experiments/metrics.py",
+              "sca/experiments/baselines.py",
+          }
+          root = ET.parse("coverage.xml").getroot()
+          sources = [s.text or "" for s in root.iter("source")] or [""]
+
+          def to_repo_relative(filename):
+              # coverage.xml <class filename=...> is relative to <sources>, and
+              # coverage sets that root to the PACKAGE dir (".../sca") whenever
+              # --cov=sca is used. Filenames therefore arrive as
+              # "utils/stats.py", never "sca/utils/stats.py". Rejoin against
+              # each source root and re-anchor at the last "sca" component so
+              # the key is repo-relative for both layouts, and for a
+              # site-packages install.
+              for src in sources:
+                  parts = posixpath.join(src, filename).split("/")
+                  if "sca" in parts:
+                      i = len(parts) - 1 - parts[::-1].index("sca")
+                      return "/".join(parts[i:])
+              return filename
+
+          rates = {}
+          for cls in root.iter("class"):
+              rates[to_repo_relative(cls.get("filename"))] = float(cls.get("line-rate", 0.0))
+
+          # Guard the guard. If NOTHING matched, this is a broken check, not ten
+          # untested modules -- fail with that diagnosis rather than a
+          # misleading "NOT MEASURED" list that sends the reader after the
+          # wrong bug (which is exactly what happened on the first CI run).
+          if not (CRITICAL & rates.keys()):
+              print("FAIL: no critical module matched the coverage report.")
+              print("This is a check/configuration bug, not a coverage gap.")
+              print(f"  <sources>: {sources}")
+              print(f"  sample keys after normalisation: {sorted(rates)[:5]}")
+              sys.exit(1)
+
+          bad = []
+          for path in sorted(CRITICAL):
+              rate = rates.get(path)
+              if rate is None:
+                  bad.append(f"{path}: ABSENT from the coverage report")
+              elif rate < 0.50:
+                  bad.append(f"{path}: {rate:.0%} line coverage")
+          if bad:
+              print("Result-producing modules below the 50% per-file floor:")
+              print("\n".join("  " + b for b in bad))
+              sys.exit(1)
+          print(f"ok: all {len(CRITICAL)} result-producing modules are above 50%")
+          for path in sorted(CRITICAL):
+              print(f"  {path}: {rates[path]:.0%}")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  # ==========================================================================
+  reproducibility:
+    name: reproducibility (the F9 job)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Prove hash randomisation is ACTIVE on this runner
+        # Control step. If the builtin hash() were stable across processes
+        # here, every check below would pass vacuously and this job would be
+        # theatre -- which is precisely the failure mode of the old repo's
+        # determinism tests.
+        run: |
+          set -euo pipefail
+          unset PYTHONHASHSEED || true
+          a=$(python -c "print(hash('safety violation token'))")
+          b=$(python -c "print(hash('safety violation token'))")
+          c=$(python -c "print(hash('safety violation token'))")
+          echo "builtin hash across 3 processes: $a $b $c"
+          if [ "$a" = "$b" ] && [ "$b" = "$c" ]; then
+            echo "FAIL: builtin hash() is stable across processes on this"
+            echo "runner. Hash randomisation appears disabled, so this job"
+            echo "cannot detect F9. Investigate before trusting a green run."
+            exit 1
+          fi
+          echo "ok: hash randomisation is active"
+
+      - name: Three fresh processes must agree byte-for-byte
+        # This is the check that would have caught F9. It runs the probe (and
+        # the experiment driver, if present) in independent interpreters with
+        # PYTHONHASHSEED unset, and SHA-256-diffs everything written.
+        run: |
+          unset PYTHONHASHSEED || true
+          make repro-check REPRO_REPEATS=3
+
+      - name: And must agree under DIFFERENT explicit hash seeds
+        run: make repro-check-strict REPRO_REPEATS=3
+
+      - name: Subprocess reproducibility tests
+        run: pytest -q tests/test_seeding.py -m subprocess
+
+      - name: No builtin hash() in live modules
+        # Static backstop for the same defect.
+        run: pytest -q tests/test_seeding.py -k NoBuiltinHashInPackage
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: repro-artifacts
+          path: .repro/
+
+  # ==========================================================================
+  smoke:
+    name: smoke (experiments end-to-end)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Fast end-to-end experiment run
+        # Writes to a scratch results dir so a CI run can never overwrite the
+        # committed results/ tree.
+        env:
+          SCA_RESULTS_DIR: ${{ runner.temp }}/smoke-results
+        run: make smoke
+
+      - name: Smoke run must have produced artifacts
+        # A target that "succeeds" without writing anything is how stale
+        # results survive. Assert output actually appeared.
+        env:
+          SCA_RESULTS_DIR: ${{ runner.temp }}/smoke-results
+        run: |
+          n=$(find "$SCA_RESULTS_DIR" -type f | wc -l)
+          echo "smoke run wrote $n file(s)"
+          find "$SCA_RESULTS_DIR" -type f -printf '  %p (%s bytes)\n' || true
+          if [ "$n" -eq 0 ]; then
+            echo "FAIL: the smoke run produced no output files."
+            exit 1
+          fi
+
+      - name: Full sweep
+        if: >-
+          github.event_name == 'schedule' ||
+          inputs.run_full_suite == true
+        env:
+          SCA_RESULTS_DIR: ${{ runner.temp }}/full-results
+        run: make experiments
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-results
+          path: ${{ runner.temp }}/smoke-results/
+          if-no-files-found: warn
+
+  # ==========================================================================
+  status:
+    name: CI status
+    runs-on: ubuntu-latest
+    needs: [packaging, tests, coverage, reproducibility, smoke]
+    if: always()
+    steps:
+      - name: Fail if any required job failed
+        run: |
+          echo "packaging:       ${{ needs.packaging.result }}"
+          echo "tests:           ${{ needs.tests.result }}"
+          echo "coverage:        ${{ needs.coverage.result }}"
+          echo "reproducibility: ${{ needs.reproducibility.result }}"
+          echo "smoke:           ${{ needs.smoke.result }}"
+          for r in "${{ needs.packaging.result }}" \
+                   "${{ needs.tests.result }}" \
+                   "${{ needs.coverage.result }}" \
+                   "${{ needs.reproducibility.result }}" \
+                   "${{ needs.smoke.result }}"; do
+            if [ "$r" != "success" ]; then
+              echo "CI failed."
+              exit 1
+            fi
+          done
+          echo "All required jobs passed."
