@@ -194,7 +194,7 @@ jobs:
         # A module at 0% is exactly that condition.
         run: |
           python - <<'PY'
-          import sys, xml.etree.ElementTree as ET
+          import sys, posixpath, xml.etree.ElementTree as ET
 
           CRITICAL = {
               "sca/utils/stats.py",
@@ -209,22 +209,52 @@ jobs:
               "sca/experiments/baselines.py",
           }
           root = ET.parse("coverage.xml").getroot()
+          sources = [s.text or "" for s in root.iter("source")] or [""]
+
+          def to_repo_relative(filename):
+              # coverage.xml <class filename=...> is relative to <sources>, and
+              # coverage sets that root to the PACKAGE dir (".../sca") whenever
+              # --cov=sca is used. Filenames therefore arrive as
+              # "utils/stats.py", never "sca/utils/stats.py". Rejoin against
+              # each source root and re-anchor at the last "sca" component so
+              # the key is repo-relative for both layouts, and for a
+              # site-packages install.
+              for src in sources:
+                  parts = posixpath.join(src, filename).split("/")
+                  if "sca" in parts:
+                      i = len(parts) - 1 - parts[::-1].index("sca")
+                      return "/".join(parts[i:])
+              return filename
+
           rates = {}
           for cls in root.iter("class"):
-              rates[cls.get("filename")] = float(cls.get("line-rate", 0.0))
+              rates[to_repo_relative(cls.get("filename"))] = float(cls.get("line-rate", 0.0))
+
+          # Guard the guard. If NOTHING matched, this is a broken check, not ten
+          # untested modules -- fail with that diagnosis rather than a
+          # misleading "NOT MEASURED" list that sends the reader after the
+          # wrong bug (which is exactly what happened on the first CI run).
+          if not (CRITICAL & rates.keys()):
+              print("FAIL: no critical module matched the coverage report.")
+              print("This is a check/configuration bug, not a coverage gap.")
+              print(f"  <sources>: {sources}")
+              print(f"  sample keys after normalisation: {sorted(rates)[:5]}")
+              sys.exit(1)
 
           bad = []
           for path in sorted(CRITICAL):
               rate = rates.get(path)
               if rate is None:
-                  bad.append(f"{path}: NOT MEASURED")
+                  bad.append(f"{path}: ABSENT from the coverage report")
               elif rate < 0.50:
                   bad.append(f"{path}: {rate:.0%} line coverage")
           if bad:
               print("Result-producing modules below the 50% per-file floor:")
               print("\n".join("  " + b for b in bad))
               sys.exit(1)
-          print("ok: every result-producing module is above 50%")
+          print(f"ok: all {len(CRITICAL)} result-producing modules are above 50%")
+          for path in sorted(CRITICAL):
+              print(f"  {path}: {rates[path]:.0%}")
           PY
 
       - uses: actions/upload-artifact@v4
